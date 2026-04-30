@@ -1,0 +1,29 @@
+<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="frost-gradient" x1="0" y1="0" x2="128" y2="128" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00E5FF"/>
+      <stop offset="100%" stop-color="#0057FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect x="8" y="8" width="112" height="112" rx="28" fill="url(#frost-gradient)"/>
+
+  <!-- Negative-space Frost S (cut style) -->
+  <path d="
+    M44 36
+    C44 24 56 20 64 20
+    C76 20 84 26 84 34
+    C84 42 76 46 64 48
+    C52 50 44 54 44 64
+    C44 74 54 80 64 80
+    C74 80 84 74 84 66
+  "
+    stroke="white"
+    stroke-width="10"
+    stroke-linecap="round"
+    stroke-linejoin="round"/>
+
+  <!-- Ice cut accents (brand hook) -->
+  <path d="M36 28L52 20M76 108L92 92" stroke="white" stroke-opacity="0.35" stroke-width="4" stroke-linecap="round"/>
+</svg>

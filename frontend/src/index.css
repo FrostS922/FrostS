@@ -1,0 +1,509 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  color-scheme: dark;
+  --app-bg: #101317;
+  --app-bg-strong: #0d1013;
+  --shell-bg: #14181d;
+  --shell-bg-muted: #171c22;
+  --shell-border: #26303a;
+  --content-bg: #101317;
+  --panel-bg: #171c22;
+  --panel-bg-elevated: #1c232a;
+  --panel-border: #25303a;
+  --text-primary: #e7edf3;
+  --text-secondary: #a8b3bf;
+  --text-muted: #788795;
+  --accent: #2dd4bf;
+  --accent-strong: #7ff5e5;
+  --accent-contrast: #07120f;
+  --accent-secondary: #7aa2ff;
+  --accent-soft: rgba(45, 212, 191, 0.14);
+  --accent-soft-strong: rgba(45, 212, 191, 0.2);
+  --nav-text: #a8b3bf;
+  --nav-active-bg: rgba(45, 212, 191, 0.16);
+  --header-bg: rgba(20, 24, 29, 0.9);
+  --shadow-soft: 0 16px 44px rgba(0, 0, 0, 0.32);
+  --login-brand-bg: #11161b;
+  --login-form-bg: #101317;
+  --focus-ring: rgba(45, 212, 191, 0.16);
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+  --app-bg: #f5f7f9;
+  --app-bg-strong: #eef3f7;
+  --shell-bg: #ffffff;
+  --shell-bg-muted: #f6f8fa;
+  --shell-border: #dce4ec;
+  --content-bg: #f5f7f9;
+  --panel-bg: #ffffff;
+  --panel-bg-elevated: #f8fafc;
+  --panel-border: #e2e9f0;
+  --text-primary: #17202a;
+  --text-secondary: #40505f;
+  --text-muted: #667085;
+  --accent: #0f9f8f;
+  --accent-strong: #087a70;
+  --accent-contrast: #ffffff;
+  --accent-secondary: #3f6fd8;
+  --accent-soft: rgba(15, 159, 143, 0.1);
+  --accent-soft-strong: rgba(15, 159, 143, 0.16);
+  --nav-text: #40505f;
+  --nav-active-bg: rgba(15, 159, 143, 0.12);
+  --header-bg: rgba(255, 255, 255, 0.9);
+  --shadow-soft: 0 16px 44px rgba(37, 54, 73, 0.11);
+  --login-brand-bg: #f0f5f6;
+  --login-form-bg: #ffffff;
+  --focus-ring: rgba(15, 159, 143, 0.16);
+}
+
+html {
+  background: var(--app-bg);
+}
+
+body {
+  min-width: 320px;
+  background: var(--app-bg);
+  color: var(--text-primary);
+  font-family: 'Segoe UI Variable', Aptos, 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  height: 100vh;
+}
+
+body,
+.ant-layout,
+.ant-card,
+.ant-table,
+.ant-modal-content,
+.ant-pro-card {
+  transition:
+    background-color 0.22s ease,
+    border-color 0.22s ease,
+    color 0.22s ease;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  color: var(--text-primary);
+}
+
+.app-layout {
+  min-height: 100vh;
+  background:
+    linear-gradient(180deg, var(--app-bg-strong), var(--content-bg) 180px),
+    var(--content-bg);
+}
+
+.app-sider {
+  background: var(--shell-bg) !important;
+  border-right: 1px solid var(--shell-border);
+  box-shadow: var(--shadow-soft);
+}
+
+.app-logo {
+  position: relative;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.app-logo::after {
+  content: '';
+  position: absolute;
+  right: 16px;
+  bottom: 0;
+  left: 16px;
+  height: 1px;
+  background: var(--shell-border);
+}
+
+.app-logo-mark {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  padding: 5px;
+  background: var(--panel-bg-elevated);
+}
+
+.app-logo-title {
+  color: var(--text-primary);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0;
+  transition: opacity 0.2s ease;
+}
+
+.app-sider .ant-menu {
+  background: transparent !important;
+  border-inline-end: 0 !important;
+  padding: 8px;
+}
+
+.app-sider .ant-menu-item,
+.app-sider .ant-menu-submenu-title {
+  color: var(--nav-text) !important;
+  margin-inline: 0 !important;
+  width: 100% !important;
+}
+
+.app-sider .ant-menu-item-selected {
+  background: var(--nav-active-bg) !important;
+  color: var(--accent-strong) !important;
+}
+
+.app-sider .ant-menu-item:hover,
+.app-sider .ant-menu-submenu-title:hover {
+  background: var(--accent-soft) !important;
+  color: var(--text-primary) !important;
+}
+
+.app-main {
+  background: transparent;
+}
+
+.app-header {
+  height: 64px;
+  padding: 0 16px;
+  background: var(--header-bg);
+  border-bottom: 1px solid var(--shell-border);
+  backdrop-filter: blur(14px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.app-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.app-icon-button.ant-btn {
+  color: var(--text-secondary);
+}
+
+.app-icon-button.ant-btn:hover {
+  color: var(--accent-strong) !important;
+  background: var(--accent-soft) !important;
+}
+
+.app-user-trigger {
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+.app-user-trigger:hover {
+  background: var(--accent-soft);
+  color: var(--text-primary);
+}
+
+.app-content {
+  margin: 16px;
+  padding: 18px;
+  min-height: calc(100vh - 96px);
+  overflow: auto;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-soft);
+}
+
+.page-title {
+  margin: 0 0 18px;
+  color: var(--text-primary);
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.metric-card.ant-card {
+  border-color: var(--panel-border);
+  box-shadow: none;
+}
+
+.metric-card .ant-statistic-title {
+  color: var(--text-muted);
+}
+
+.metric-card .ant-statistic-content {
+  color: var(--text-primary);
+}
+
+.ant-pro-card,
+.ant-card,
+.ant-modal-content {
+  border-radius: 8px !important;
+}
+
+.ant-pro-table .ant-pro-card,
+.ant-card {
+  border-color: var(--panel-border);
+}
+
+.ant-table-wrapper .ant-table {
+  border-radius: 8px;
+}
+
+.login-page {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(320px, 0.9fr) minmax(360px, 1.1fr);
+  min-height: 100vh;
+  background: var(--app-bg);
+  color: var(--text-primary);
+}
+
+.login-theme-toggle {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  z-index: 3;
+}
+
+.login-brand-panel,
+.login-form-panel {
+  position: relative;
+  min-height: 100vh;
+}
+
+.login-brand-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 56px 48px;
+  overflow: hidden;
+  background: var(--login-brand-bg);
+  border-right: 1px solid var(--shell-border);
+}
+
+.login-brand-panel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--accent-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--accent-soft) 1px, transparent 1px);
+  background-size: 34px 34px;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.login-brand-content,
+.login-feature-stack,
+.login-version {
+  position: relative;
+  z-index: 1;
+}
+
+.login-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 6px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.login-badge-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  animation: themePulse 2s ease-in-out infinite;
+}
+
+.login-brand-title {
+  max-width: 420px;
+  margin-top: 28px;
+  color: var(--text-primary);
+  font-size: 42px;
+  font-weight: 800;
+  line-height: 1.12;
+}
+
+.login-brand-title span {
+  color: var(--accent-strong);
+}
+
+.login-brand-subtitle {
+  max-width: 370px;
+  margin-top: 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.login-feature-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-feature {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--text-secondary);
+}
+
+.login-feature-icon {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-bg-elevated);
+  color: var(--accent-strong);
+}
+
+.login-feature strong {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+.login-version {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.login-form-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 40px;
+  background: var(--login-form-bg);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-form-title {
+  color: var(--text-primary);
+  font-size: 26px;
+  font-weight: 800;
+}
+
+.login-form-subtitle {
+  margin-top: 8px;
+  margin-bottom: 30px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.login-card .ant-form-item-label > label {
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.login-card .ant-input-affix-wrapper {
+  border-radius: 8px !important;
+}
+
+.login-submit.ant-btn {
+  height: 44px;
+  width: 100%;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.login-hint {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--panel-border);
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.login-hint-code {
+  display: inline-flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-bg-elevated);
+  color: var(--text-secondary);
+  font-family: Consolas, 'SFMono-Regular', monospace;
+  font-size: 12px;
+}
+
+.theme-fade-up {
+  animation: themeFadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes themeFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes themePulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.36;
+  }
+}
+
+@media (max-width: 900px) {
+  .login-page {
+    grid-template-columns: 1fr;
+  }
+
+  .login-brand-panel {
+    min-height: auto;
+    padding: 72px 24px 32px;
+    gap: 34px;
+  }
+
+  .login-form-panel {
+    min-height: auto;
+    padding: 36px 24px 56px;
+  }
+
+  .login-brand-title {
+    font-size: 34px;
+  }
+
+  .app-content {
+    margin: 10px;
+    padding: 12px;
+  }
+}

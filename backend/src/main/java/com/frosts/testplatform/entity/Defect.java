@@ -1,0 +1,82 @@
+package com.frosts.testplatform.entity;
+
+import com.frosts.testplatform.common.BaseEntity;
+import jakarta.persistence.*;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@Entity
+@Table(name = "defect")
+public class Defect extends BaseEntity {
+
+    @Column(nullable = false, length = 200)
+    private String title;
+
+    @Column(unique = true, length = 50)
+    private String defectNumber;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id")
+    private Project project;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "test_case_id")
+    private TestCase testCase;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "test_plan_case_id")
+    private TestPlanCase testPlanCase;
+
+    @Column(columnDefinition = "TEXT")
+    private String description;
+
+    @Column(columnDefinition = "TEXT")
+    private String stepsToReproduce;
+
+    @Column(columnDefinition = "TEXT")
+    private String expectedBehavior;
+
+    @Column(columnDefinition = "TEXT")
+    private String actualBehavior;
+
+    @Column(length = 20)
+    private String severity;
+
+    @Column(length = 20)
+    private String priority;
+
+    @Column(length = 20)
+    private String status;
+
+    @Column(length = 20)
+    private String type;
+
+    @Column(name = "reported_by", length = 50)
+    private String reportedBy;
+
+    @Column(name = "assigned_to", length = 50)
+    private String assignedTo;
+
+    @Column(name = "resolved_by", length = 50)
+    private String resolvedBy;
+
+    @Column(name = "resolved_at")
+    private LocalDateTime resolvedAt;
+
+    @Column(name = "closed_at")
+    private LocalDateTime closedAt;
+
+    @Column(length = 100)
+    private String environment;
+
+    @OneToMany(mappedBy = "defect", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<DefectAttachment> attachments;
+
+    @Column(columnDefinition = "TEXT")
+    private String resolution;
+}
