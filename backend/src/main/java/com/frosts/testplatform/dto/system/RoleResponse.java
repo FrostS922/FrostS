@@ -8,6 +8,7 @@ public record RoleResponse(
         String code,
         String name,
         String description,
+        Integer sortOrder,
         List<PermissionResponse> permissions,
         LocalDateTime createdAt,
         LocalDateTime updatedAt

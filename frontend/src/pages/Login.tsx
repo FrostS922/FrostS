@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Button, Form, Input, Tooltip, message } from 'antd'
+import { Button, Form, Input, Tooltip } from 'antd'
 import {
   BarChartOutlined,
   ExperimentOutlined,
@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom'
 import { login } from '../api/auth'
 import { useThemeStore } from '../store/themeStore'
 import { useUserStore } from '../store/userStore'
+import useMessage from '../hooks/useMessage'
 
 const fadeStyle = (delayMs: number): React.CSSProperties => ({
   animationDelay: `${delayMs}ms`,
@@ -23,6 +24,7 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate()
   const { login: setUser } = useUserStore()
   const { mode, toggleMode } = useThemeStore()
+  const message = useMessage()
 
   const onFinish = async (values: { username: string; password: string }) => {
     setLoading(true)
@@ -32,7 +34,7 @@ const LoginPage: React.FC = () => {
         const { token, username, realName, email, roles } = response
         setUser({ token, username, realName, email, roles })
         message.success('登录成功，正在跳转...')
-        navigate('/dashboard')
+        setTimeout(() => navigate('/dashboard'), 800)
       } else {
         message.error('登录响应异常，缺少必要信息')
       }

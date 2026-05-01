@@ -12,6 +12,7 @@ import com.frosts.testplatform.dto.system.SystemOverviewResponse;
 import com.frosts.testplatform.dto.system.SystemSettingResponse;
 import com.frosts.testplatform.dto.system.UpdateOrganizationUnitRequest;
 import com.frosts.testplatform.dto.system.UpdateRoleRequest;
+import com.frosts.testplatform.dto.system.UpdateRoleSortRequest;
 import com.frosts.testplatform.dto.system.UpdateSystemSettingsRequest;
 import com.frosts.testplatform.dto.system.UpdateUserRequest;
 import com.frosts.testplatform.dto.system.UserResponse;
@@ -91,13 +92,19 @@ public class SystemManagementController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
         Page<RoleResponse> roles = systemManagementService.getRoles(search,
-                PageRequest.of(page, size, Sort.by("createdAt").descending()));
+                PageRequest.of(page, size, Sort.by("sortOrder").ascending().and(Sort.by("createdAt").descending())));
         return ResponseEntity.ok(ApiResponse.success(roles.getContent(), roles.getTotalElements()));
     }
 
     @PostMapping("/roles")
     public ResponseEntity<ApiResponse<RoleResponse>> createRole(@Valid @RequestBody CreateRoleRequest request) {
         return ResponseEntity.ok(ApiResponse.success(systemManagementService.createRole(request)));
+    }
+
+    @PutMapping("/roles/sort")
+    public ResponseEntity<ApiResponse<Void>> updateRoleSort(@Valid @RequestBody UpdateRoleSortRequest request) {
+        systemManagementService.updateRoleSortOrder(request.roleIds());
+        return ResponseEntity.ok(ApiResponse.success(null));
     }
 
     @PutMapping("/roles/{id}")

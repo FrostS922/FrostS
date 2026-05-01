@@ -206,6 +206,21 @@ public class SystemManagementService {
         roleRepository.save(role);
     }
 
+    public void updateRoleSortOrder(List<Long> roleIds) {
+        if (roleIds == null || roleIds.isEmpty()) {
+            return;
+        }
+        List<Role> roles = roleRepository.findAllById(roleIds);
+        Map<Long, Role> roleMap = roles.stream().collect(Collectors.toMap(Role::getId, role -> role));
+        for (int i = 0; i < roleIds.size(); i++) {
+            Role role = roleMap.get(roleIds.get(i));
+            if (role != null) {
+                role.setSortOrder(i);
+                roleRepository.save(role);
+            }
+        }
+    }
+
     @Transactional(readOnly = true)
     public List<PermissionResponse> getPermissions() {
         return permissionRepository.findByIsDeletedFalseOrderByResourceAscCodeAsc()
@@ -395,6 +410,7 @@ public class SystemManagementService {
                 role.getCode(),
                 role.getName(),
                 role.getDescription(),
+                role.getSortOrder(),
                 permissions,
                 role.getCreatedAt(),
                 role.getUpdatedAt()

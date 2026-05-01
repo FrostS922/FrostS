@@ -1,5 +1,6 @@
 import React from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
+import { App as AntApp } from 'antd'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
@@ -19,27 +20,29 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 
 const App: React.FC = () => {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route
-        path="/"
-        element={
-          <PrivateRoute>
-            <Layout />
-          </PrivateRoute>
-        }
-      >
-        <Route index element={<Navigate to="/dashboard" replace />} />
-        <Route path="dashboard" element={<Dashboard />} />
-        <Route path="projects" element={<ProjectList />} />
-        <Route path="projects/:id/requirements" element={<RequirementList />} />
-        <Route path="projects/:id/testcases" element={<TestCaseList />} />
-        <Route path="projects/:id/testplans" element={<TestPlanList />} />
-        <Route path="projects/:id/defects" element={<DefectList />} />
-        <Route path="system" element={<SystemManagement />} />
-        <Route path="system/settings" element={<SystemSettings />} />
-      </Route>
-    </Routes>
+    <AntApp>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/"
+          element={
+            <PrivateRoute>
+              <Layout />
+            </PrivateRoute>
+          }
+        >
+          <Route index element={<Navigate to="/dashboard" replace />} />
+          <Route path="dashboard" element={<Dashboard />} />
+          <Route path="projects" element={<ProjectList />} />
+          <Route path="projects/:id/requirements" element={<RequirementList />} />
+          <Route path="projects/:id/testcases" element={<TestCaseList />} />
+          <Route path="projects/:id/testplans" element={<TestPlanList />} />
+          <Route path="projects/:id/defects" element={<DefectList />} />
+          <Route path="system" element={<SystemManagement />} />
+          <Route path="system/settings" element={<SystemSettings />} />
+        </Route>
+      </Routes>
+    </AntApp>
   )
 }
 

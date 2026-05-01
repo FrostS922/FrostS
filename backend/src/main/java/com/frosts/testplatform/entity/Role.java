@@ -22,6 +22,9 @@ public class Role extends BaseEntity {
 
     private String description;
 
+    @Column(nullable = false)
+    private Integer sortOrder = 0;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
         name = "sys_role_permission",

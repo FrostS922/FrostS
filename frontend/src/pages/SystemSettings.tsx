@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Button, Card, Col, Empty, Input, InputNumber, Popconfirm, Row, Select, Space, Switch, Tag, message } from 'antd'
+import { Button, Card, Empty, Input, InputNumber, Popconfirm, Select, Space, Switch, Tag, Tabs } from 'antd'
 import { ReloadOutlined, SaveOutlined } from '@ant-design/icons'
 import {
   getSystemSettings,
@@ -7,6 +7,7 @@ import {
   updateSystemSettings,
   type SystemSetting,
 } from '../api/system'
+import useMessage from '../hooks/useMessage'
 
 const settingCategoryLabels: Record<string, string> = {
   BASIC: '基础设置',
@@ -16,8 +17,10 @@ const settingCategoryLabels: Record<string, string> = {
 }
 
 const SystemSettings: React.FC = () => {
+  const message = useMessage()
   const [settings, setSettings] = useState<SystemSetting[]>([])
   const [settingValues, setSettingValues] = useState<Record<string, string>>({})
+  const [activeCategory, setActiveCategory] = useState<string>('')
 
   const loadSettings = useCallback(async () => {
     const response = await getSystemSettings()
@@ -29,6 +32,9 @@ const SystemSettings: React.FC = () => {
           nextSettings.map((setting) => [setting.settingKey, setting.settingValue || '']),
         ),
       )
+      if (nextSettings.length > 0) {
+        setActiveCategory((current) => current || nextSettings[0].category)
+      }
     }
   }, [])
 
@@ -150,33 +156,42 @@ const SystemSettings: React.FC = () => {
     {},
   )
 
+  if (settings.length === 0) {
+    return <Empty description="暂无系统设置项" style={{ marginTop: 60 }} />
+  }
+
   return (
     <div>
-      <Row gutter={[16, 16]}>
-        {Object.entries(settingsByCategory).map(([category, categorySettings]) => (
-          <Col xs={24} lg={12} key={category}>
-            <Card
-              title={settingCategoryLabels[category] || category}
-              extra={
-                <Space>
-                  <Popconfirm
-                    title="恢复默认设置？"
-                    description="此分类下的可编辑设置将恢复为默认值。"
-                    onConfirm={() => resetSettingCategory(category)}
-                  >
-                    <Button icon={<ReloadOutlined />}>恢复默认</Button>
-                  </Popconfirm>
-                  <Button
-                    type="primary"
-                    icon={<SaveOutlined />}
-                    onClick={() => submitSettingCategory(category)}
-                  >
-                    保存
-                  </Button>
-                </Space>
-              }
+      <Card
+        title={settingCategoryLabels[activeCategory] || activeCategory || '系统设置'}
+        extra={
+          <Space>
+            <Popconfirm
+              title="恢复默认设置？"
+              description="当前分类下的可编辑设置将恢复为默认值。"
+              onConfirm={() => resetSettingCategory(activeCategory)}
             >
-              <Space direction="vertical" size={16} style={{ width: '100%' }}>
+              <Button icon={<ReloadOutlined />}>恢复默认</Button>
+            </Popconfirm>
+            <Button
+              type="primary"
+              icon={<SaveOutlined />}
+              onClick={() => submitSettingCategory(activeCategory)}
+            >
+              保存
+            </Button>
+          </Space>
+        }
+      >
+        <Tabs
+          tabPosition="left"
+          activeKey={activeCategory}
+          onChange={setActiveCategory}
+          items={Object.entries(settingsByCategory).map(([category, categorySettings]) => ({
+            label: settingCategoryLabels[category] || category,
+            key: category,
+            children: (
+              <Space direction="vertical" size={16} style={{ width: '100%', maxWidth: 800, paddingLeft: 24 }}>
                 {categorySettings.map((setting) => (
                   <div key={setting.settingKey}>
                     <div
@@ -205,15 +220,10 @@ const SystemSettings: React.FC = () => {
                   </div>
                 ))}
               </Space>
-            </Card>
-          </Col>
-        ))}
-        {settings.length === 0 && (
-          <Col span={24}>
-            <Empty description="暂无系统设置项" />
-          </Col>
-        )}
-      </Row>
+            ),
+          }))}
+        />
+      </Card>
     </div>
   )
 }

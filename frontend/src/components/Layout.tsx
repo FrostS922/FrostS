@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Outlet, useNavigate, useLocation } from 'react-router-dom'
-import { Layout, Menu, Button, Avatar, Dropdown, Space, Tooltip } from 'antd'
+import { Layout, Menu, Button, Avatar, Dropdown, Space, Tooltip, Breadcrumb } from 'antd'
 import {
   DashboardOutlined,
   ProjectOutlined,
@@ -106,10 +106,27 @@ const MainLayout: React.FC = () => {
   ]
 
   const handleMenuClick = ({ key }: { key: string }) => {
-    if (!key.includes('/projects/')) {
-      navigate(key)
-    }
+    navigate(key)
   }
+
+  const breadcrumbItems = (() => {
+    const items = [{ title: '首页', key: 'home' }]
+    for (const item of menuItems) {
+      if (item.key === location.pathname) {
+        items.push({ title: item.label, key: item.key })
+        break
+      }
+      if (item.children) {
+        const child = item.children.find(c => c.key === location.pathname)
+        if (child) {
+          items.push({ title: item.label, key: item.key })
+          items.push({ title: child.label, key: child.key })
+          break
+        }
+      }
+    }
+    return items
+  })()
 
   return (
     <Layout className="app-layout">
@@ -132,12 +149,15 @@ const MainLayout: React.FC = () => {
       </Sider>
       <Layout className="app-main">
         <Header className="app-header">
-          <Button
-            className="app-icon-button"
-            type="text"
-            icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
-            onClick={() => setCollapsed(!collapsed)}
-          />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <Button
+              className="app-icon-button"
+              type="text"
+              icon={collapsed ? <MenuUnfoldOutlined /> : <MenuFoldOutlined />}
+              onClick={() => setCollapsed(!collapsed)}
+            />
+            <Breadcrumb items={breadcrumbItems} />
+          </div>
           <div className="app-header-actions">
             <Tooltip title={mode === 'dark' ? '切换为亮色主题' : '切换为暗色主题'}>
               <Button

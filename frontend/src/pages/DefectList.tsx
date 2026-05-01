@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Tag } from 'antd'
+import { Table, Button, Modal, Form, Input, Select, Space, Popconfirm, Tag } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons'
 import { getDefects, createDefect, updateDefect, deleteDefect, resolveDefect, closeDefect } from '../api/defect'
+import useMessage from '../hooks/useMessage'
 
 const DefectList: React.FC = () => {
   const { id: projectId } = useParams<{ id: string }>()
@@ -12,6 +13,7 @@ const DefectList: React.FC = () => {
   const [editingDefect, setEditingDefect] = useState<any>(null)
   const [form] = Form.useForm()
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
+  const message = useMessage()
 
   const fetchData = async () => {
     setLoading(true)
@@ -64,7 +66,7 @@ const DefectList: React.FC = () => {
         <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingDefect(null); form.resetFields(); setModalVisible(true) }}>提交缺陷</Button>
       </div>
       <Table dataSource={data} columns={columns} loading={loading} rowKey="id" pagination={pagination} scroll={{ x: 1000 }} />
-      <Modal title={editingDefect ? '编辑缺陷' : '提交缺陷'} open={modalVisible} onOk={handleSubmit} onCancel={() => setModalVisible(false)} width={700}>
+      <Modal title={editingDefect ? '编辑缺陷' : '提交缺陷'} open={modalVisible} onOk={handleSubmit} onCancel={() => setModalVisible(false)} width={700} forceRender>
         <Form form={form} layout="vertical">
           <Form.Item name="title" label="标题" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="description" label="描述"><Input.TextArea rows={3} /></Form.Item>

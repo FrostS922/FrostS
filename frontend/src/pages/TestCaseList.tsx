@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Tag } from 'antd'
+import { Table, Button, Modal, Form, Input, Select, Space, Popconfirm, Tag } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { getTestCases, createTestCase, updateTestCase, deleteTestCase } from '../api/testCase'
+import useMessage from '../hooks/useMessage'
 
 const TestCaseList: React.FC = () => {
   const { id: projectId } = useParams<{ id: string }>()
@@ -12,6 +13,7 @@ const TestCaseList: React.FC = () => {
   const [editingCase, setEditingCase] = useState<any>(null)
   const [form] = Form.useForm()
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
+  const message = useMessage()
 
   const fetchData = async () => {
     setLoading(true)
@@ -63,7 +65,7 @@ const TestCaseList: React.FC = () => {
         <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingCase(null); form.resetFields(); setModalVisible(true) }}>新建用例</Button>
       </div>
       <Table dataSource={data} columns={columns} loading={loading} rowKey="id" pagination={pagination} scroll={{ x: 800 }} />
-      <Modal title={editingCase ? '编辑用例' : '新建用例'} open={modalVisible} onOk={handleSubmit} onCancel={() => setModalVisible(false)} width={700}>
+      <Modal title={editingCase ? '编辑用例' : '新建用例'} open={modalVisible} onOk={handleSubmit} onCancel={() => setModalVisible(false)} width={700} forceRender>
         <Form form={form} layout="vertical">
           <Form.Item name="title" label="标题" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="preconditions" label="前置条件"><Input.TextArea rows={2} /></Form.Item>

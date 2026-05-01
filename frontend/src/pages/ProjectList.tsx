@@ -1,14 +1,16 @@
 import React, { useRef, useState } from 'react'
-import { Button, Modal, Form, Input, Select, Space, message, Popconfirm } from 'antd'
+import { Button, Modal, Form, Input, Select, Space, Popconfirm } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined } from '@ant-design/icons'
 import { ProTable, type ProColumns, type ActionType } from '@ant-design/pro-components'
 import { getProjects, createProject, updateProject, deleteProject } from '../api/project'
+import useMessage from '../hooks/useMessage'
 
 const ProjectList: React.FC = () => {
   const [modalVisible, setModalVisible] = useState(false)
   const [editingProject, setEditingProject] = useState<any>(null)
   const [form] = Form.useForm()
   const actionRef = useRef<ActionType>()
+  const message = useMessage()
 
   const handleCreate = () => {
     setEditingProject(null)
@@ -142,7 +144,7 @@ const ProjectList: React.FC = () => {
         open={modalVisible}
         onOk={handleSubmit}
         onCancel={() => setModalVisible(false)}
-        destroyOnHidden
+        forceRender
       >
         <Form form={form} layout="vertical">
           <Form.Item name="name" label="项目名称" rules={[{ required: true, message: '请输入项目名称' }]}>

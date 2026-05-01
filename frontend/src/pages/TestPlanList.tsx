@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Table, Button, Modal, Form, Input, Select, Space, message, Popconfirm, Tag } from 'antd'
+import { Table, Button, Modal, Form, Input, Select, Space, Popconfirm, Tag } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, PlayCircleOutlined } from '@ant-design/icons'
 import { getTestPlans, createTestPlan, updateTestPlan, deleteTestPlan } from '../api/testPlan'
+import useMessage from '../hooks/useMessage'
 
 const TestPlanList: React.FC = () => {
   const { id: projectId } = useParams<{ id: string }>()
@@ -12,6 +13,7 @@ const TestPlanList: React.FC = () => {
   const [editingPlan, setEditingPlan] = useState<any>(null)
   const [form] = Form.useForm()
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
+  const message = useMessage()
 
   const fetchData = async () => {
     setLoading(true)
@@ -63,7 +65,7 @@ const TestPlanList: React.FC = () => {
         <Button type="primary" icon={<PlusOutlined />} onClick={() => { setEditingPlan(null); form.resetFields(); setModalVisible(true) }}>新建计划</Button>
       </div>
       <Table dataSource={data} columns={columns} loading={loading} rowKey="id" pagination={pagination} />
-      <Modal title={editingPlan ? '编辑计划' : '新建计划'} open={modalVisible} onOk={handleSubmit} onCancel={() => setModalVisible(false)} width={600}>
+      <Modal title={editingPlan ? '编辑计划' : '新建计划'} open={modalVisible} onOk={handleSubmit} onCancel={() => setModalVisible(false)} width={600} forceRender>
         <Form form={form} layout="vertical">
           <Form.Item name="name" label="计划名称" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item name="description" label="描述"><Input.TextArea rows={3} /></Form.Item>

@@ -29,6 +29,7 @@ export interface Role {
   code: string
   name: string
   description?: string
+  sortOrder: number
   permissions: Permission[]
   createdAt?: string
   updatedAt?: string
@@ -167,6 +168,10 @@ export const updateSystemRole = (
 
 export const deleteSystemRole = (id: number) => {
   return request.delete(`/system/roles/${id}`) as unknown as Promise<ApiResponse<null>>
+}
+
+export const updateRoleSort = (roleIds: number[]) => {
+  return request.put('/system/roles/sort', { roleIds }) as unknown as Promise<ApiResponse<null>>
 }
 
 export const getSystemPermissions = () => {

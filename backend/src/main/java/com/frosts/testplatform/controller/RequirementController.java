@@ -1,6 +1,7 @@
 package com.frosts.testplatform.controller;
 
 import com.frosts.testplatform.common.ApiResponse;
+import com.frosts.testplatform.entity.Project;
 import com.frosts.testplatform.entity.Requirement;
 import com.frosts.testplatform.service.RequirementService;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +42,9 @@ public class RequirementController {
 
     @PostMapping
     public ResponseEntity<ApiResponse<Requirement>> createRequirement(@PathVariable Long projectId, @RequestBody Requirement requirement) {
+        Project project = new Project();
+        project.setId(projectId);
+        requirement.setProject(project);
         return ResponseEntity.ok(ApiResponse.success(requirementService.createRequirement(requirement)));
     }
 

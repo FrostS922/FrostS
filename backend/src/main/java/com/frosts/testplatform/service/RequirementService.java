@@ -42,13 +42,13 @@ public class RequirementService {
         Requirement requirement = requirementRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("需求不存在: " + id));
 
-        requirement.setTitle(requirementDetails.getTitle());
-        requirement.setDescription(requirementDetails.getDescription());
-        requirement.setType(requirementDetails.getType());
-        requirement.setPriority(requirementDetails.getPriority());
-        requirement.setStatus(requirementDetails.getStatus());
-        requirement.setParent(requirementDetails.getParent());
-        requirement.setAssignedTo(requirementDetails.getAssignedTo());
+        if (requirementDetails.getTitle() != null) requirement.setTitle(requirementDetails.getTitle());
+        if (requirementDetails.getDescription() != null) requirement.setDescription(requirementDetails.getDescription());
+        if (requirementDetails.getType() != null) requirement.setType(requirementDetails.getType());
+        if (requirementDetails.getPriority() != null) requirement.setPriority(requirementDetails.getPriority());
+        if (requirementDetails.getStatus() != null) requirement.setStatus(requirementDetails.getStatus());
+        if (requirementDetails.getParent() != null) requirement.setParent(requirementDetails.getParent());
+        if (requirementDetails.getAssignedTo() != null) requirement.setAssignedTo(requirementDetails.getAssignedTo());
 
         return requirementRepository.save(requirement);
     }

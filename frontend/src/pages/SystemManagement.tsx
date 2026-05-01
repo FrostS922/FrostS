@@ -18,7 +18,6 @@ import {
   Tree,
   Descriptions,
   Empty,
-  message,
 } from 'antd'
 import {
   ApartmentOutlined,
@@ -27,11 +26,10 @@ import {
   LockOutlined,
   PlusOutlined,
   SafetyCertificateOutlined,
-  TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons'
 import type { DataNode } from 'antd/es/tree'
-import { ProTable, type ActionType, type ProColumns } from '@ant-design/pro-components'
+import { ProTable, ProList, DragSortTable, type ActionType, type ProColumns } from '@ant-design/pro-components'
 import {
   createOrganizationUnit,
   createSystemRole,
@@ -48,12 +46,14 @@ import {
   resetSystemUserPassword,
   updateSystemRole,
   updateSystemUser,
+  updateRoleSort,
   type OrganizationUnit,
   type Permission,
   type Role,
   type SystemOverview,
   type SystemUser,
 } from '../api/system'
+import useMessage from '../hooks/useMessage'
 
 interface UserFormValues {
   username: string
@@ -119,6 +119,7 @@ const toOrganizationTreeData = (items: OrganizationUnit[]): DataNode[] =>
   }))
 
 const SystemManagement: React.FC = () => {
+  const message = useMessage()
   const [overview, setOverview] = useState<SystemOverview>({
     totalUsers: 0,
     enabledUsers: 0,
@@ -414,30 +415,35 @@ const SystemManagement: React.FC = () => {
       title: '用户名',
       dataIndex: 'username',
       search: false,
+      width: 120,
       ellipsis: true,
     },
     {
       title: '姓名',
       dataIndex: 'realName',
       search: false,
+      width: 100,
       ellipsis: true,
     },
     {
       title: '邮箱',
       dataIndex: 'email',
       search: false,
+      width: 180,
       ellipsis: true,
     },
     {
       title: '手机号',
       dataIndex: 'phone',
       search: false,
+      width: 130,
       ellipsis: true,
     },
     {
       title: '角色',
       dataIndex: 'roles',
       search: false,
+      width: 180,
       render: (_, record) => (
         <Space size={[0, 4]} wrap>
           {record.roles.map((role) => (
@@ -452,7 +458,7 @@ const SystemManagement: React.FC = () => {
       title: '状态',
       dataIndex: 'enabled',
       search: false,
-      width: 90,
+      width: 80,
       render: (_, record) => (
         <Tag color={record.enabled ? 'green' : 'default'}>
           {record.enabled ? '启用' : '停用'}
@@ -462,7 +468,8 @@ const SystemManagement: React.FC = () => {
     {
       title: '操作',
       valueType: 'option',
-      width: 250,
+      width: 220,
+      fixed: 'right',
       render: (_, record) => (
         <Space size={16}>
           <Button type="link" style={{ padding: 0 }} icon={<EditOutlined />} onClick={() => openEditUser(record)}>
@@ -482,6 +489,12 @@ const SystemManagement: React.FC = () => {
   ]
 
   const roleColumns: ProColumns<Role>[] = [
+    {
+      title: '排序',
+      dataIndex: 'sort',
+      width: 60,
+      className: 'drag-visible',
+    },
     {
       title: '关键词',
       dataIndex: 'search',
@@ -534,34 +547,7 @@ const SystemManagement: React.FC = () => {
     },
   ]
 
-  const permissionColumns: ProColumns<Permission>[] = [
-    {
-      title: '权限编码',
-      dataIndex: 'code',
-      ellipsis: true,
-    },
-    {
-      title: '权限名称',
-      dataIndex: 'name',
-      ellipsis: true,
-    },
-    {
-      title: '资源',
-      dataIndex: 'resource',
-      ellipsis: true,
-    },
-    {
-      title: '动作',
-      dataIndex: 'action',
-      width: 100,
-      render: (_, record) => <Tag>{record.action}</Tag>,
-    },
-    {
-      title: '描述',
-      dataIndex: 'description',
-      ellipsis: true,
-    },
-  ]
+
 
   return (
     <div>
@@ -598,6 +584,9 @@ const SystemManagement: React.FC = () => {
                 columns={userColumns}
                 actionRef={userActionRef}
                 rowKey="id"
+                rowSelection={{ fixed: true }}
+                tableAlertRender={false}
+                scroll={{ x: 1100 }}
                 headerTitle="用户管理"
                 toolBarRender={() => [
                   <Button key="create" type="primary" icon={<PlusOutlined />} onClick={openCreateUser}>
@@ -629,34 +618,30 @@ const SystemManagement: React.FC = () => {
             key: 'roles',
             label: '角色管理',
             children: (
-              <ProTable<Role>
+              <DragSortTable<Role>
                 columns={roleColumns}
-                actionRef={roleActionRef}
                 rowKey="id"
                 headerTitle="角色管理"
+                search={false}
+                dragSortKey="sort"
+                dataSource={roles}
+                onDragSortEnd={async (_beforeIndex, _afterIndex, newDataSource) => {
+                  try {
+                    const ids = newDataSource.map(role => role.id)
+                    await updateRoleSort(ids)
+                    setRoles(newDataSource)
+                    message.success('排序操作成功')
+                  } catch (e: any) {
+                    console.error('排序保存失败:', e)
+                    message.error('排序保存失败')
+                  }
+                }}
                 toolBarRender={() => [
                   <Button key="create" type="primary" icon={<PlusOutlined />} onClick={openCreateRole}>
                     新建角色
                   </Button>,
                 ]}
-                request={async (params) => {
-                  const response = await getSystemRoles({
-                    page: (params.current || 1) - 1,
-                    size: params.pageSize || 10,
-                    search: params.search as string | undefined,
-                  })
-
-                  return {
-                    data: response.data || [],
-                    success: response.code === 200,
-                    total: response.total || 0,
-                  }
-                }}
-                pagination={{
-                  pageSize: 10,
-                  showSizeChanger: true,
-                  showQuickJumper: true,
-                }}
+                pagination={false}
               />
             ),
           },
@@ -762,16 +747,36 @@ const SystemManagement: React.FC = () => {
             key: 'permissions',
             label: '权限查看',
             children: (
-              <ProTable<Permission>
-                columns={permissionColumns}
+              <ProList<Permission>
                 dataSource={permissions}
                 rowKey="id"
-                search={false}
+                headerTitle="权限查看"
+                itemLayout="horizontal"
+                variant="borderless"
+                split={true}
                 pagination={{
                   pageSize: 10,
                   showSizeChanger: true,
                 }}
-                headerTitle="权限查看"
+                metas={{
+                  title: {
+                    dataIndex: 'name',
+                  },
+                  description: {
+                    dataIndex: 'code',
+                  },
+                  subTitle: {
+                    render: (_, record) => (
+                      <Space size={[0, 8]} wrap>
+                        <Tag color="blue">{record.resource}</Tag>
+                        <Tag>{record.action}</Tag>
+                      </Space>
+                    ),
+                  },
+                  content: {
+                    dataIndex: 'description',
+                  },
+                }}
               />
             ),
           },
