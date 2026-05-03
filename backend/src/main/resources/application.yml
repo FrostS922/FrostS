@@ -26,19 +26,48 @@ spring:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
   
-  redis:
-    host: localhost
-    port: 16379
-    password:
+  data:
+    redis:
+      host: localhost
+      port: 16379
+      password:
   
+  servlet:
+    multipart:
+      max-file-size: 2MB
+      max-request-size: 5MB
+
   jackson:
     date-format: yyyy-MM-dd HH:mm:ss
     time-zone: Asia/Shanghai
 
+  mail:
+    host: smtp.example.com
+    port: 587
+    username: noreply@frosts.com
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
 jwt:
   secret: FrostsTestPlatformSecretKey2024VeryLongAndSecure
-  expiration: 86400000
+  expiration: 7200000
+  refresh-expiration: 604800000
 
 app:
   cors:
     allowed-origins: http://localhost:5173,http://localhost:3000
+  security:
+    alert:
+      email-enabled: true
+      ban-threshold: 20
+  file:
+    upload-dir: ./uploads
+    avatar-dir: ./uploads/avatars
+  mfa:
+    issuer: FrostS
+    encryption-key: ${MFA_ENCRYPTION_KEY:defaultMfaEncryptionKey2024}

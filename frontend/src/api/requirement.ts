@@ -36,3 +36,7 @@ export const updateRequirementStatus = (projectId: number, id: number, status: s
 export const deleteRequirement = (projectId: number, id: number) => {
   return request.delete(`/projects/${projectId}/requirements/${id}`)
 }
+
+export const getRequirementCoverage = (projectId: number, requirementId: number) => {
+  return request.get(`/projects/${projectId}/requirements/${requirementId}/coverage`)
+}

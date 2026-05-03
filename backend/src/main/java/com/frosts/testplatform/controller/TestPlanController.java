@@ -1,9 +1,10 @@
 package com.frosts.testplatform.controller;
 
 import com.frosts.testplatform.common.ApiResponse;
+import com.frosts.testplatform.dto.testplan.*;
 import com.frosts.testplatform.entity.TestPlan;
-import com.frosts.testplatform.entity.TestPlanCase;
 import com.frosts.testplatform.service.TestPlanService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,7 +37,7 @@ public class TestPlanController {
     }
 
     @GetMapping("/{planId}/cases")
-    public ResponseEntity<ApiResponse<List<TestPlanCase>>> getTestPlanCases(@PathVariable Long planId) {
+    public ResponseEntity<ApiResponse<List<TestPlanCaseResponse>>> getTestPlanCases(@PathVariable Long planId) {
         return ResponseEntity.ok(ApiResponse.success(testPlanService.getTestPlanCases(planId)));
     }
 
@@ -57,16 +58,51 @@ public class TestPlanController {
     }
 
     @PostMapping("/{planId}/cases")
-    public ResponseEntity<ApiResponse<TestPlanCase>> addTestCase(@PathVariable Long planId, @RequestBody TestPlanCase testPlanCase) {
-        return ResponseEntity.ok(ApiResponse.success(testPlanService.addTestCaseToPlan(planId, testPlanCase)));
+    public ResponseEntity<ApiResponse<TestPlanCaseResponse>> addTestCase(
+            @PathVariable Long planId,
+            @Valid @RequestBody AddTestCaseRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(testPlanService.addTestCaseToPlan(planId, request)));
     }
 
     @PostMapping("/cases/{caseId}/execute")
-    public ResponseEntity<ApiResponse<TestPlanCase>> executeTestCase(
+    public ResponseEntity<ApiResponse<TestPlanCaseResponse>> executeTestCase(
             @PathVariable Long caseId,
-            @RequestParam String status,
-            @RequestParam String actualResult,
-            @RequestParam String executedBy) {
-        return ResponseEntity.ok(ApiResponse.success(testPlanService.executeTestCase(caseId, status, actualResult, executedBy)));
+            @Valid @RequestBody ExecuteTestCaseRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(testPlanService.executeTestCase(caseId, request)));
+    }
+
+    @PostMapping("/{planId}/cases/batch")
+    public ResponseEntity<ApiResponse<List<TestPlanCaseResponse>>> batchAddTestCases(
+            @PathVariable Long planId,
+            @Valid @RequestBody BatchAddTestCasesRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(testPlanService.batchAddTestCases(planId, request)));
+    }
+
+    @DeleteMapping("/{planId}/cases/batch")
+    public ResponseEntity<ApiResponse<Void>> batchRemoveTestCases(
+            @PathVariable Long planId,
+            @Valid @RequestBody BatchRemoveTestCasesRequest request) {
+        testPlanService.batchRemoveTestCases(planId, request);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/cases/batch-execute")
+    public ResponseEntity<ApiResponse<List<TestPlanCaseResponse>>> batchExecuteTestCases(
+            @Valid @RequestBody BatchExecuteTestCasesRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(testPlanService.batchExecuteTestCases(request)));
+    }
+
+    @PutMapping("/cases/{caseId}/assign")
+    public ResponseEntity<ApiResponse<TestPlanCaseResponse>> assignTestCase(
+            @PathVariable Long caseId,
+            @Valid @RequestBody AssignTestCaseRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(testPlanService.assignTestCase(caseId, request)));
+    }
+
+    @PostMapping("/{planId}/cases/batch-assign")
+    public ResponseEntity<ApiResponse<List<TestPlanCaseResponse>>> batchAssignTestCases(
+            @PathVariable Long planId,
+            @Valid @RequestBody BatchAssignTestCasesRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(testPlanService.batchAssignTestCases(planId, request)));
     }
 }

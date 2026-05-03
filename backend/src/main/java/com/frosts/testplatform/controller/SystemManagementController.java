@@ -6,7 +6,7 @@ import com.frosts.testplatform.dto.system.CreateRoleRequest;
 import com.frosts.testplatform.dto.system.CreateUserRequest;
 import com.frosts.testplatform.dto.system.OrganizationUnitResponse;
 import com.frosts.testplatform.dto.system.PermissionResponse;
-import com.frosts.testplatform.dto.system.ResetPasswordRequest;
+import com.frosts.testplatform.dto.system.ResetPasswordResponse;
 import com.frosts.testplatform.dto.system.RoleResponse;
 import com.frosts.testplatform.dto.system.SystemOverviewResponse;
 import com.frosts.testplatform.dto.system.SystemSettingResponse;
@@ -79,10 +79,13 @@ public class SystemManagementController {
     }
 
     @PostMapping("/users/{id}/reset-password")
-    public ResponseEntity<ApiResponse<Void>> resetPassword(
-            @PathVariable Long id,
-            @Valid @RequestBody ResetPasswordRequest request) {
-        systemManagementService.resetPassword(id, request);
+    public ResponseEntity<ApiResponse<ResetPasswordResponse>> resetPassword(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.success(systemManagementService.resetPassword(id)));
+    }
+
+    @PostMapping("/users/{id}/unlock")
+    public ResponseEntity<ApiResponse<Void>> unlockUser(@PathVariable Long id) {
+        systemManagementService.unlockUser(id);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

@@ -5,7 +5,7 @@ import com.frosts.testplatform.dto.system.CreateUserRequest;
 import com.frosts.testplatform.dto.system.CreateOrganizationUnitRequest;
 import com.frosts.testplatform.dto.system.OrganizationUnitResponse;
 import com.frosts.testplatform.dto.system.PermissionResponse;
-import com.frosts.testplatform.dto.system.ResetPasswordRequest;
+import com.frosts.testplatform.dto.system.ResetPasswordResponse;
 import com.frosts.testplatform.dto.system.RoleResponse;
 import com.frosts.testplatform.dto.system.RoleSummaryResponse;
 import com.frosts.testplatform.dto.system.SystemOverviewResponse;
@@ -33,6 +33,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Arrays;
@@ -89,16 +91,41 @@ public class SystemManagementService {
             throw new RuntimeException("邮箱已存在: " + email);
         }
 
+        String rawPassword = normalize(request.password());
+        String generatedPassword = null;
+        if (rawPassword == null) {
+            generatedPassword = generateRandomPassword();
+            rawPassword = generatedPassword;
+        }
+
         User user = new User();
         user.setUsername(username);
-        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setPassword(passwordEncoder.encode(rawPassword));
         user.setRealName(normalize(request.realName()));
         user.setEmail(email);
         user.setPhone(normalize(request.phone()));
         user.setEnabled(request.enabled() == null || request.enabled());
+        user.setMustChangePassword(true);
+        user.setPasswordChangedAt(LocalDateTime.now());
         user.setRoles(resolveRoles(request.roleIds()));
 
-        return toUserResponse(userRepository.save(user));
+        UserResponse response = toUserResponse(userRepository.save(user));
+        return new UserResponse(
+                response.id(),
+                response.username(),
+                response.realName(),
+                response.email(),
+                response.phone(),
+                response.avatar(),
+                response.department(),
+                response.position(),
+                response.enabled(),
+                response.accountNonLocked(),
+                response.roles(),
+                generatedPassword,
+                response.createdAt(),
+                response.updatedAt()
+        );
     }
 
     public UserResponse updateUser(Long id, UpdateUserRequest request) {
@@ -122,6 +149,9 @@ public class SystemManagementService {
         user.setRealName(normalize(request.realName()));
         user.setEmail(email);
         user.setPhone(normalize(request.phone()));
+        user.setAvatar(normalize(request.avatar()));
+        user.setDepartment(normalize(request.department()));
+        user.setPosition(normalize(request.position()));
         if (request.enabled() != null) {
             user.setEnabled(request.enabled());
         }
@@ -142,9 +172,21 @@ public class SystemManagementService {
         userRepository.save(user);
     }
 
-    public void resetPassword(Long id, ResetPasswordRequest request) {
+    public ResetPasswordResponse resetPassword(Long id) {
         User user = findActiveUser(id);
-        user.setPassword(passwordEncoder.encode(request.password()));
+        String generatedPassword = generateRandomPassword();
+        user.setPassword(passwordEncoder.encode(generatedPassword));
+        user.setMustChangePassword(true);
+        user.setPasswordChangedAt(LocalDateTime.now());
+        userRepository.save(user);
+        return new ResetPasswordResponse(generatedPassword);
+    }
+
+    public void unlockUser(Long id) {
+        User user = findActiveUser(id);
+        user.setAccountNonLocked(true);
+        user.setLockReason(null);
+        user.setLoginFailCount(0);
         userRepository.save(user);
     }
 
@@ -391,8 +433,13 @@ public class SystemManagementService {
                 user.getRealName(),
                 user.getEmail(),
                 user.getPhone(),
+                user.getAvatar(),
+                user.getDepartment(),
+                user.getPosition(),
                 user.getEnabled(),
+                user.getAccountNonLocked(),
                 roles,
+                null,
                 user.getCreatedAt(),
                 user.getUpdatedAt()
         );
@@ -606,5 +653,44 @@ public class SystemManagementService {
 
     private String valueOrEmpty(String value) {
         return value == null ? "" : value;
+    }
+
+    private static final String PASSWORD_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%";
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    private String generateRandomPassword() {
+        int length = getPasswordMinLength();
+        if (length < 8) {
+            length = 12;
+        }
+        length = Math.max(length, 12);
+        StringBuilder sb = new StringBuilder(length);
+        sb.append(PASSWORD_CHARS.charAt(SECURE_RANDOM.nextInt(26)));
+        sb.append(PASSWORD_CHARS.charAt(26 + SECURE_RANDOM.nextInt(26)));
+        sb.append(PASSWORD_CHARS.charAt(52 + SECURE_RANDOM.nextInt(10)));
+        sb.append(PASSWORD_CHARS.charAt(62 + SECURE_RANDOM.nextInt(6)));
+        for (int i = 4; i < length; i++) {
+            sb.append(PASSWORD_CHARS.charAt(SECURE_RANDOM.nextInt(PASSWORD_CHARS.length())));
+        }
+        char[] chars = sb.toString().toCharArray();
+        for (int i = chars.length - 1; i > 0; i--) {
+            int j = SECURE_RANDOM.nextInt(i + 1);
+            char temp = chars[i];
+            chars[i] = chars[j];
+            chars[j] = temp;
+        }
+        return new String(chars);
+    }
+
+    private int getPasswordMinLength() {
+        return systemSettingRepository.findBySettingKeyAndIsDeletedFalse("security.password_min_length")
+                .map(setting -> {
+                    try {
+                        return Integer.parseInt(setting.getSettingValue());
+                    } catch (NumberFormatException e) {
+                        return 6;
+                    }
+                })
+                .orElse(6);
     }
 }

@@ -1,6 +1,7 @@
 package com.frosts.testplatform.controller;
 
 import com.frosts.testplatform.common.ApiResponse;
+import com.frosts.testplatform.dto.RequirementCoverageDTO;
 import com.frosts.testplatform.entity.Project;
 import com.frosts.testplatform.entity.Requirement;
 import com.frosts.testplatform.service.RequirementService;
@@ -57,5 +58,12 @@ public class RequirementController {
     public ResponseEntity<ApiResponse<Void>> deleteRequirement(@PathVariable Long id) {
         requirementService.deleteRequirement(id);
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @GetMapping("/{requirementId}/coverage")
+    public ResponseEntity<ApiResponse<RequirementCoverageDTO>> getRequirementCoverage(
+            @PathVariable Long projectId,
+            @PathVariable Long requirementId) {
+        return ResponseEntity.ok(ApiResponse.success(requirementService.getRequirementCoverage(projectId, requirementId)));
     }
 }

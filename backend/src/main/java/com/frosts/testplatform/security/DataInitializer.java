@@ -15,6 +15,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Map;
@@ -125,6 +126,12 @@ public class DataInitializer implements CommandLineRunner {
                 null, "前端会话空闲超时建议值", 20, true);
         createSetting("security.login_max_attempts", "登录失败上限", "SECURITY", "NUMBER", "5",
                 null, "账号锁定策略预留配置", 30, true);
+        createSetting("security.open_registration", "开放注册", "SECURITY", "BOOLEAN", "false",
+                null, "开启后允许用户自行注册账号，注册后默认分配测试工程师角色", 40, true);
+        createSetting("security.password_complexity", "密码复杂度", "SECURITY", "SELECT", "LOW",
+                "LOW,MEDIUM,HIGH", "LOW=仅长度要求;MEDIUM=需含字母和数字;HIGH=需含大小写字母、数字和特殊字符", 50, true);
+        createSetting("security.password_expire_days", "密码过期天数", "SECURITY", "NUMBER", "0",
+                null, "密码过期天数，0表示永不过期，超过天数后登录需修改密码", 60, true);
         createSetting("notification.email_enabled", "启用邮件通知", "NOTIFICATION", "BOOLEAN", "false",
                 null, "开启后可对缺陷和计划事件发送邮件", 10, true);
         createSetting("notification.smtp_host", "SMTP 服务地址", "NOTIFICATION", "TEXT", "",
@@ -137,6 +144,26 @@ public class DataInitializer implements CommandLineRunner {
                 null, "已解决缺陷超过指定天数可自动关闭", 20, true);
         createSetting("quality.default_priority", "默认优先级", "QUALITY", "SELECT", "MEDIUM",
                 "LOW,MEDIUM,HIGH,URGENT", "新建需求、用例或缺陷时的默认优先级", 30, true);
+        createSetting("error_monitor.alert_threshold", "错误告警阈值", "QUALITY", "NUMBER", "5",
+                null, "同一错误在时间窗口内出现次数达到此值时触发告警", 40, true);
+        createSetting("error_monitor.alert_window_minutes", "告警时间窗口(分钟)", "QUALITY", "NUMBER", "10",
+                null, "统计错误出现次数的时间范围", 50, true);
+        createSetting("error_monitor.alert_cooldown_minutes", "告警冷却期(分钟)", "QUALITY", "NUMBER", "30",
+                null, "同一错误触发告警后的最短间隔时间", 60, true);
+        createSetting("error_monitor.retention_days", "错误日志保留天数", "QUALITY", "NUMBER", "30",
+                null, "超过此天数的错误日志将被自动清理", 70, true);
+        createSetting("perf_monitor.alert_window_minutes", "性能告警时间窗口(分钟)", "QUALITY", "NUMBER", "30",
+                null, "统计性能指标 poor 评级占比的时间范围", 80, true);
+        createSetting("perf_monitor.alert_poor_ratio", "性能告警 poor 占比阈值(%)", "QUALITY", "NUMBER", "50",
+                null, "当 poor 评级占比超过此百分比时触发告警", 90, true);
+        createSetting("perf_monitor.alert_cooldown_minutes", "性能告警冷却期(分钟)", "QUALITY", "NUMBER", "60",
+                null, "同一指标触发告警后的最短间隔时间", 100, true);
+        createSetting("perf_monitor.alert_min_sample_count", "性能告警最小采样数", "QUALITY", "NUMBER", "5",
+                null, "时间窗口内采样数低于此值时不触发告警", 110, true);
+        createSetting("perf_monitor.retention_days", "性能日志保留天数", "QUALITY", "NUMBER", "30",
+                null, "超过此天数的性能日志将被自动清理", 120, true);
+        createSetting("perf_monitor.sampling_rate", "性能采样率(%)", "QUALITY", "NUMBER", "100",
+                null, "前端性能指标上报采样率，1-100之间的整数，100表示全部上报", 130, true);
     }
 
     private void initAdmin() {
@@ -147,6 +174,8 @@ public class DataInitializer implements CommandLineRunner {
             admin.setRealName("系统管理员");
             admin.setEmail("admin@frosts.com");
             admin.setEnabled(true);
+            admin.setMustChangePassword(false);
+            admin.setPasswordChangedAt(LocalDateTime.now());
             admin.setRoles(Set.of(
                     roleRepository.findByCode("ADMIN").orElseThrow()
             ));

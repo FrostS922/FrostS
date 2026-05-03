@@ -22,8 +22,17 @@ public class Role extends BaseEntity {
 
     private String description;
 
+    @Column(length = 20)
+    private String type;
+
     @Column(nullable = false)
     private Integer sortOrder = 0;
+
+    @Column(nullable = false)
+    private Boolean enabled = true;
+
+    @Column(name = "is_system")
+    private Boolean isSystem = false;
 
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -39,4 +40,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByEnabledAndIsDeletedFalse(Boolean enabled);
 
     long countByRoles_IdAndIsDeletedFalse(Long roleId);
+
+    long countByAccountNonLockedFalseAndIsDeletedFalse();
+
+    @Query("""
+            SELECT u FROM User u JOIN u.roles r
+            WHERE r.code = :roleCode AND u.isDeleted = false AND u.enabled = true
+            """)
+    List<User> findByRoleCodeAndEnabled(@Param("roleCode") String roleCode);
 }

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
@@ -32,8 +33,26 @@ public class Project extends BaseEntity {
     @Column(name = "end_date")
     private LocalDate endDate;
 
+    @Column(name = "actual_end_date")
+    private LocalDate actualEndDate;
+
     @Column(length = 20)
     private String status;
+
+    @Column(length = 30)
+    private String category;
+
+    @Column(precision = 5, scale = 2)
+    private BigDecimal progress;
+
+    @Column(name = "estimated_hours")
+    private Integer estimatedHours;
+
+    @Column(name = "actual_hours")
+    private Integer actualHours;
+
+    @Column(length = 20)
+    private String health;
 
     @ManyToMany
     @JoinTable(

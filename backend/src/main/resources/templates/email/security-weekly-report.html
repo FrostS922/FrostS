@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FrostS 安全周报</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f0f2f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #f0f2f5; padding: 32px 0;">
+        <tr>
+            <td align="center">
+                <table role="presentation" width="680" cellspacing="0" cellpadding="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+
+                    <!-- Header -->
+                    <tr>
+                        <td style="background-color: #1890ff; padding: 32px 40px;">
+                            <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 600; letter-spacing: 1px;">FrostS 安全周报</h1>
+                            <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.85); font-size: 14px;">
+                                <span th:text="${startDate}"></span> ~ <span th:text="${endDate}"></span>
+                            </p>
+                        </td>
+                    </tr>
+
+                    <!-- Section 1: Login Statistics -->
+                    <tr>
+                        <td style="padding: 32px 40px 0 40px;">
+                            <h2 style="margin: 0; font-size: 18px; color: #1a1a1a; border-left: 4px solid #1890ff; padding-left: 12px;">登录统计</h2>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 16px 40px 0 40px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td width="33%" style="padding-right: 8px;">
+                                        <div style="background-color: #f6ffed; border: 1px solid #b7eb8f; border-radius: 6px; padding: 16px; text-align: center;">
+                                            <div style="font-size: 28px; font-weight: 700; color: #52c41a;" th:text="${loginSuccesses}">0</div>
+                                            <div style="font-size: 13px; color: #666666; margin-top: 4px;">登录成功</div>
+                                        </div>
+                                    </td>
+                                    <td width="33%" style="padding: 0 8px;">
+                                        <div style="background-color: #fff2f0; border: 1px solid #ffccc7; border-radius: 6px; padding: 16px; text-align: center;">
+                                            <div style="font-size: 28px; font-weight: 700; color: #ff4d4f;" th:text="${loginFailures}">0</div>
+                                            <div style="font-size: 13px; color: #666666; margin-top: 4px;">登录失败</div>
+                                        </div>
+                                    </td>
+                                    <td width="33%" style="padding-left: 8px;">
+                                        <div style="background-color: #e6f7ff; border: 1px solid #91d5ff; border-radius: 6px; padding: 16px; text-align: center;">
+                                            <div style="font-size: 28px; font-weight: 700; color: #1890ff;" th:text="${activeUsers}">0</div>
+                                            <div style="font-size: 13px; color: #666666; margin-top: 4px;">活跃用户</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Daily Trend Table -->
+                    <tr>
+                        <td style="padding: 20px 40px 0 40px;">
+                            <p style="margin: 0 0 12px 0; font-size: 14px; color: #666666; font-weight: 500;">每日登录趋势</p>
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; border: 1px solid #e8e8e8; border-radius: 4px; overflow: hidden;">
+                                <thead>
+                                    <tr style="background-color: #fafafa;">
+                                        <th style="padding: 10px 16px; text-align: left; font-size: 13px; color: #666666; font-weight: 600; border-bottom: 1px solid #e8e8e8;">日期</th>
+                                        <th style="padding: 10px 16px; text-align: center; font-size: 13px; color: #666666; font-weight: 600; border-bottom: 1px solid #e8e8e8;">成功</th>
+                                        <th style="padding: 10px 16px; text-align: center; font-size: 13px; color: #666666; font-weight: 600; border-bottom: 1px solid #e8e8e8;">失败</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="day : ${dailyTrend}" style="border-bottom: 1px solid #f0f0f0;">
+                                        <td style="padding: 10px 16px; font-size: 13px; color: #333333;" th:text="${day.date}">-</td>
+                                        <td style="padding: 10px 16px; font-size: 13px; color: #52c41a; text-align: center;" th:text="${day.successes}">0</td>
+                                        <td style="padding: 10px 16px; font-size: 13px; color: #ff4d4f; text-align: center;" th:text="${day.failures}">0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Divider -->
+                    <tr>
+                        <td style="padding: 28px 40px 0 40px;">
+                            <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 0;" />
+                        </td>
+                    </tr>
+
+                    <!-- Section 2: Ban Status -->
+                    <tr>
+                        <td style="padding: 24px 40px 0 40px;">
+                            <h2 style="margin: 0; font-size: 18px; color: #1a1a1a; border-left: 4px solid #fa8c16; padding-left: 12px;">封禁情况</h2>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 16px 40px 0 40px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td width="50%" style="padding-right: 8px;">
+                                        <div style="background-color: #fff7e6; border: 1px solid #ffd591; border-radius: 6px; padding: 16px; text-align: center;">
+                                            <div style="font-size: 28px; font-weight: 700; color: #fa8c16;" th:text="${bannedIpCount}">0</div>
+                                            <div style="font-size: 13px; color: #666666; margin-top: 4px;">当前封禁 IP</div>
+                                        </div>
+                                    </td>
+                                    <td width="50%" style="padding-left: 8px;">
+                                        <div style="background-color: #fff1f0; border: 1px solid #ffa39e; border-radius: 6px; padding: 16px; text-align: center;">
+                                            <div style="font-size: 28px; font-weight: 700; color: #f5222d;" th:text="${newBansThisWeek}">0</div>
+                                            <div style="font-size: 13px; color: #666666; margin-top: 4px;">本周新增封禁</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Banned IP List -->
+                    <tr>
+                        <td style="padding: 20px 40px 0 40px;">
+                            <p style="margin: 0 0 12px 0; font-size: 14px; color: #666666; font-weight: 500;">封禁 IP 列表</p>
+                            <div th:if="${#lists.isEmpty(bannedIps)}">
+                                <p style="margin: 0; font-size: 13px; color: #999999; font-style: italic; padding: 12px 16px; background-color: #fafafa; border-radius: 4px;">当前无封禁 IP</p>
+                            </div>
+                            <table th:if="${!#lists.isEmpty(bannedIps)}" role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse: collapse; border: 1px solid #e8e8e8; border-radius: 4px; overflow: hidden;">
+                                <thead>
+                                    <tr style="background-color: #fafafa;">
+                                        <th style="padding: 10px 16px; text-align: left; font-size: 13px; color: #666666; font-weight: 600; border-bottom: 1px solid #e8e8e8;">IP 地址</th>
+                                        <th style="padding: 10px 16px; text-align: left; font-size: 13px; color: #666666; font-weight: 600; border-bottom: 1px solid #e8e8e8;">封禁时间</th>
+                                        <th style="padding: 10px 16px; text-align: right; font-size: 13px; color: #666666; font-weight: 600; border-bottom: 1px solid #e8e8e8;">剩余时间(秒)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="ban : ${bannedIps}" style="border-bottom: 1px solid #f0f0f0;">
+                                        <td style="padding: 10px 16px; font-size: 13px; color: #333333; font-family: 'Courier New', monospace;" th:text="${ban.ip}">-</td>
+                                        <td style="padding: 10px 16px; font-size: 13px; color: #666666;" th:text="${ban.bannedAt}">-</td>
+                                        <td style="padding: 10px 16px; font-size: 13px; color: #fa8c16; text-align: right;" th:text="${ban.remainingSeconds}">0</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Divider -->
+                    <tr>
+                        <td style="padding: 28px 40px 0 40px;">
+                            <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 0;" />
+                        </td>
+                    </tr>
+
+                    <!-- Section 3: Anomaly Events -->
+                    <tr>
+                        <td style="padding: 24px 40px 0 40px;">
+                            <h2 style="margin: 0; font-size: 18px; color: #1a1a1a; border-left: 4px solid #f5222d; padding-left: 12px;">异常事件</h2>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 16px 40px 0 40px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td width="50%" style="padding-right: 8px;">
+                                        <div style="background-color: #fff1f0; border: 1px solid #ffa39e; border-radius: 6px; padding: 16px; text-align: center;">
+                                            <div style="font-size: 28px; font-weight: 700; color: #f5222d;" th:text="${suspiciousIpCount}">0</div>
+                                            <div style="font-size: 13px; color: #666666; margin-top: 4px;">可疑 IP 数量</div>
+                                        </div>
+                                    </td>
+                                    <td width="50%" style="padding-left: 8px;">
+                                        <div style="background-color: #fff1f0; border: 1px solid #ffa39e; border-radius: 6px; padding: 16px; text-align: center;">
+                                            <div style="font-size: 28px; font-weight: 700; color: #f5222d;" th:text="${tokenAbuseCount}">0</div>
+                                            <div style="font-size: 13px; color: #666666; margin-top: 4px;">Token 滥用事件</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Divider -->
+                    <tr>
+                        <td style="padding: 28px 40px 0 40px;">
+                            <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 0;" />
+                        </td>
+                    </tr>
+
+                    <!-- Section 4: Security Indicators -->
+                    <tr>
+                        <td style="padding: 24px 40px 0 40px;">
+                            <h2 style="margin: 0; font-size: 18px; color: #1a1a1a; border-left: 4px solid #722ed1; padding-left: 12px;">安全指标</h2>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 16px 40px 0 40px;">
+                            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                                <tr>
+                                    <td width="33%" style="padding-right: 8px;">
+                                        <div style="background-color: #f9f0ff; border: 1px solid #d3adf7; border-radius: 6px; padding: 16px; text-align: center;">
+                                            <div style="font-size: 28px; font-weight: 700; color: #722ed1;" th:text="${mfaEnableRate}">0%</div>
+                                            <div style="font-size: 13px; color: #666666; margin-top: 4px;">MFA 启用率</div>
+                                        </div>
+                                    </td>
+                                    <td width="33%" style="padding: 0 8px;">
+                                        <div style="background-color: #f9f0ff; border: 1px solid #d3adf7; border-radius: 6px; padding: 16px; text-align: center;">
+                                            <div style="font-size: 28px; font-weight: 700; color: #722ed1;" th:text="${passwordComplianceRate}">100%</div>
+                                            <div style="font-size: 13px; color: #666666; margin-top: 4px;">密码合规率</div>
+                                        </div>
+                                    </td>
+                                    <td width="33%" style="padding-left: 8px;">
+                                        <div style="background-color: #f9f0ff; border: 1px solid #d3adf7; border-radius: 6px; padding: 16px; text-align: center;">
+                                            <div style="font-size: 28px; font-weight: 700; color: #722ed1;" th:text="${activeSessionCount}">0</div>
+                                            <div style="font-size: 13px; color: #666666; margin-top: 4px;">活跃会话数</div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+
+                    <!-- Footer -->
+                    <tr>
+                        <td style="padding: 32px 40px;">
+                            <hr style="border: none; border-top: 1px solid #f0f0f0; margin: 0 0 16px 0;" />
+                            <p style="margin: 0; font-size: 12px; color: #999999; text-align: center;">
+                                本报告由 FrostS 安全系统自动生成 | 生成时间: <span th:text="${#dates.formatISO(#dates.createNow())}"></span>
+                            </p>
+                            <p style="margin: 4px 0 0 0; font-size: 12px; color: #bbbbbb; text-align: center;">
+                                此邮件由系统自动发送，请勿回复
+                            </p>
+                        </td>
+                    </tr>
+
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

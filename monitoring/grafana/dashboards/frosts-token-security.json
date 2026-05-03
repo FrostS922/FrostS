@@ -1,0 +1,139 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "title": "Token Refresh Alert Level Distribution",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 6, "x": 0, "y": 0 },
+      "datasource": { "type": "elasticsearch" },
+      "targets": [
+        {
+          "datasource": { "type": "elasticsearch" },
+          "query": "{\"bucketAggs\":[{\"field\":\"@timestamp\",\"id\":\"2\",\"settings\":{\"interval\":\"auto\"},\"type\":\"date_histogram\"}],\"metrics\":[{\"id\":\"1\",\"type\":\"count\"}],\"query\":\"alert_level:*\",\"timeField\":\"@timestamp\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "WARN" }, "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "ALERT" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "BAN" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "BLOCKED" }, "properties": [{ "id": "color", "value": { "fixedColor": "dark-red", "mode": "fixed" } }] }
+        ]
+      }
+    },
+    {
+      "title": "Token Refresh Events Over Time",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 18, "x": 6, "y": 0 },
+      "datasource": { "type": "elasticsearch" },
+      "targets": [
+        {
+          "datasource": { "type": "elasticsearch" },
+          "query": "{\"bucketAggs\":[{\"field\":\"@timestamp\",\"id\":\"2\",\"settings\":{\"interval\":\"auto\"},\"type\":\"date_histogram\"},{\"field\":\"alert_level\",\"id\":\"3\",\"settings\":{\"min_doc_count\":1,\"orderBy\":\"_key\",\"order\":\"desc\",\"size\":10},\"type\":\"terms\"}],\"metrics\":[{\"id\":\"1\",\"type\":\"count\"}],\"query\":\"alert_level:*\",\"timeField\":\"@timestamp\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "custom": { "fillOpacity": 30 } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "WARN" }, "properties": [{ "id": "color", "value": { "fixedColor": "yellow", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "ALERT" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "BAN" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      }
+    },
+    {
+      "title": "Top Users by Refresh Count",
+      "type": "barchart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "datasource": { "type": "elasticsearch" },
+      "targets": [
+        {
+          "datasource": { "type": "elasticsearch" },
+          "query": "{\"bucketAggs\":[{\"field\":\"username\",\"id\":\"3\",\"settings\":{\"min_doc_count\":1,\"orderBy\":\"_count\",\"order\":\"desc\",\"size\":10},\"type\":\"terms\"}],\"metrics\":[{\"field\":\"refresh_count\",\"id\":\"1\",\"type\":\"max\"}],\"query\":\"alert_level:*\",\"timeField\":\"@timestamp\"}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Client IP Distribution",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "datasource": { "type": "elasticsearch" },
+      "targets": [
+        {
+          "datasource": { "type": "elasticsearch" },
+          "query": "{\"bucketAggs\":[{\"field\":\"client_ip\",\"id\":\"3\",\"settings\":{\"min_doc_count\":1,\"orderBy\":\"_count\",\"order\":\"desc\",\"size\":20},\"type\":\"terms\"}],\"metrics\":[{\"id\":\"1\",\"type\":\"count\"}],\"query\":\"alert_level:*\",\"timeField\":\"@timestamp\"}",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "title": "Auto-Ban Events",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 8 },
+      "datasource": { "type": "elasticsearch" },
+      "targets": [
+        {
+          "datasource": { "type": "elasticsearch" },
+          "query": "{\"bucketAggs\":[],\"metrics\":[{\"id\":\"1\",\"type\":\"count\"}],\"query\":\"alert_level:BAN OR alert_level:BLOCKED\",\"timeField\":\"@timestamp\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "red", "mode": "fixed" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] } }
+      }
+    },
+    {
+      "title": "Alert Events (Last 24h)",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 8 },
+      "datasource": { "type": "elasticsearch" },
+      "targets": [
+        {
+          "datasource": { "type": "elasticsearch" },
+          "query": "{\"bucketAggs\":[],\"metrics\":[{\"id\":\"1\",\"type\":\"count\"}],\"query\":\"alert_level:ALERT\",\"timeField\":\"@timestamp\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "color": { "fixedColor": "orange", "mode": "fixed" }, "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "orange", "value": 1 }] } }
+      }
+    },
+    {
+      "title": "Recent Security Events",
+      "type": "table",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 16 },
+      "datasource": { "type": "elasticsearch" },
+      "targets": [
+        {
+          "datasource": { "type": "elasticsearch" },
+          "query": "{\"bucketAggs\":[],\"metrics\":[{\"id\":\"1\",\"type\":\"logs\"}],\"query\":\"alert_level:*\",\"timeField\":\"@timestamp\"}",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "custom": { "align": "auto" } },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "alert_level" }, "properties": [{ "id": "custom.cellOptions", "value": { "type": "color-background", "mode": "basic" } }] }
+        ]
+      }
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["frosts", "security", "token"],
+  "templating": { "list": [] },
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "",
+  "title": "FrostS Token Security Monitor",
+  "uid": "frosts-token-security",
+  "version": 1
+}

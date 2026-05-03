@@ -71,8 +71,44 @@ public class Defect extends BaseEntity {
     @Column(name = "closed_at")
     private LocalDateTime closedAt;
 
+    @Column(name = "verified_by", length = 50)
+    private String verifiedBy;
+
+    @Column(name = "verified_at")
+    private LocalDateTime verifiedAt;
+
     @Column(length = 100)
     private String environment;
+
+    @Column(name = "found_in_version", length = 50)
+    private String foundInVersion;
+
+    @Column(name = "fixed_in_version", length = 50)
+    private String fixedInVersion;
+
+    @Column(length = 100)
+    private String component;
+
+    @Column(length = 30)
+    private String reproducibility;
+
+    @Column(columnDefinition = "TEXT")
+    private String impact;
+
+    @Column(columnDefinition = "TEXT")
+    private String workaround;
+
+    @Column(name = "root_cause", columnDefinition = "TEXT")
+    private String rootCause;
+
+    @Column(name = "duplicate_of")
+    private Long duplicateOf;
+
+    @Column(name = "reopen_count")
+    private Integer reopenCount = 0;
+
+    @Column(length = 50)
+    private String source;
 
     @OneToMany(mappedBy = "defect", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DefectAttachment> attachments;

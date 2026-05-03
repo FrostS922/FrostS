@@ -24,10 +24,30 @@ export const deleteTestPlan = (projectId: number, id: number) => {
   return request.delete(`/projects/${projectId}/testplans/${id}`)
 }
 
-export const addTestCaseToPlan = (projectId: number, planId: number, data: any) => {
+export const addTestCaseToPlan = (projectId: number, planId: number, data: { testCaseId: number; priority?: string; assignedTo?: string }) => {
   return request.post(`/projects/${projectId}/testplans/${planId}/cases`, data)
 }
 
-export const executeTestCase = (projectId: number, caseId: number, params: { status: string; actualResult: string; executedBy: string }) => {
-  return request.post(`/projects/${projectId}/testplans/cases/${caseId}/execute`, null, { params })
+export const executeTestCase = (projectId: number, caseId: number, data: { status: string; actualResult?: string; executedBy: string; defectId?: string; defectLink?: string; evidence?: string; blockReason?: string }) => {
+  return request.post(`/projects/${projectId}/testplans/cases/${caseId}/execute`, data)
+}
+
+export const batchAddTestCases = (projectId: number, planId: number, data: { testCaseIds: number[] }) => {
+  return request.post(`/projects/${projectId}/testplans/${planId}/cases/batch`, data)
+}
+
+export const batchRemoveTestCases = (projectId: number, planId: number, data: { planCaseIds: number[] }) => {
+  return request.delete(`/projects/${projectId}/testplans/${planId}/cases/batch`, { data })
+}
+
+export const batchExecuteTestCases = (projectId: number, data: { planCaseIds: number[]; status: string; executedBy: string }) => {
+  return request.post(`/projects/${projectId}/testplans/cases/batch-execute`, data)
+}
+
+export const assignTestCase = (projectId: number, caseId: number, data: { assignedTo: string }) => {
+  return request.put(`/projects/${projectId}/testplans/cases/${caseId}/assign`, data)
+}
+
+export const batchAssignTestCases = (projectId: number, planId: number, data: { planCaseIds: number[]; assignedTo: string }) => {
+  return request.post(`/projects/${projectId}/testplans/${planId}/cases/batch-assign`, data)
 }

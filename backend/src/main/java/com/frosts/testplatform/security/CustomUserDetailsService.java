@@ -69,7 +69,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
         @Override
         public boolean isAccountNonLocked() {
-            return true;
+            return user.getAccountNonLocked() == null || user.getAccountNonLocked();
         }
 
         @Override

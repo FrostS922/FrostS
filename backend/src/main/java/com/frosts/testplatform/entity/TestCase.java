@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDateTime;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -38,10 +40,16 @@ public class TestCase extends BaseEntity {
     private String steps;
 
     @Column(columnDefinition = "TEXT")
+    private String testData;
+
+    @Column(columnDefinition = "TEXT")
     private String expectedResults;
 
     @Column(columnDefinition = "TEXT")
     private String actualResults;
+
+    @Column(columnDefinition = "TEXT")
+    private String postconditions;
 
     @Column(length = 20)
     private String type;
@@ -52,9 +60,42 @@ public class TestCase extends BaseEntity {
     @Column(length = 20)
     private String status;
 
-    @Column(name = "created_by_name", length = 50)
-    private String createdByName;
+    @Column(name = "execution_time")
+    private Integer executionTime;
+
+    @Column(name = "is_automated")
+    private Boolean isAutomated = false;
+
+    @Column(name = "automation_script", length = 500)
+    private String automationScript;
 
     @Column(length = 50)
-    private String automated;
+    private String reviewer;
+
+    @Column(name = "review_status", length = 20)
+    private String reviewStatus;
+
+    @Column(name = "review_comments", columnDefinition = "TEXT")
+    private String reviewComments;
+
+    @Column(length = 200)
+    private String tags;
+
+    @Column(length = 20)
+    private String version = "1.0";
+
+    @Column(name = "last_executed_at")
+    private LocalDateTime lastExecutedAt;
+
+    @Column(name = "last_executed_by", length = 50)
+    private String lastExecutedBy;
+
+    @Column(name = "pass_count")
+    private Integer passCount = 0;
+
+    @Column(name = "fail_count")
+    private Integer failCount = 0;
+
+    @Column(name = "total_executions")
+    private Integer totalExecutions = 0;
 }

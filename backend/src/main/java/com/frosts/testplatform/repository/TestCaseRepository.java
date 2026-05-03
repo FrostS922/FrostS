@@ -26,5 +26,11 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Long> {
 
     long countByProjectIdAndStatus(Long projectId, String status);
 
+    long countByProjectId(Long projectId);
+
+    List<TestCase> findByProjectId(Long projectId);
+
     boolean existsByCaseNumber(String caseNumber);
+
+    long countByRequirementId(Long requirementId);
 }

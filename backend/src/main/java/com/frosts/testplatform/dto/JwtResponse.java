@@ -12,9 +12,13 @@ import lombok.NoArgsConstructor;
 public class JwtResponse {
 
     private String token;
+    private String refreshToken;
     private String type;
     private String username;
     private String realName;
     private String email;
     private java.util.List<String> roles;
+    private Boolean mustChangePassword;
+    private Boolean requireMfa;
+    private String mfaToken;
 }

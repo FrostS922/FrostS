@@ -37,5 +37,23 @@ public class TestPlanCase extends BaseEntity {
     @Column(name = "executed_at")
     private java.time.LocalDateTime executedAt;
 
+    @Column(name = "defect_id", length = 50)
+    private String defectId;
+
+    @Column(name = "defect_link", length = 500)
+    private String defectLink;
+
+    @Column(columnDefinition = "TEXT")
+    private String evidence;
+
+    @Column(name = "retry_count")
+    private Integer retryCount = 0;
+
+    @Column(name = "is_blocked")
+    private Boolean isBlocked = false;
+
+    @Column(name = "block_reason", columnDefinition = "TEXT")
+    private String blockReason;
+
     private String comment;
 }

@@ -19,3 +19,7 @@ export const updateTestCase = (projectId: number, id: number, data: any) => {
 export const deleteTestCase = (projectId: number, id: number) => {
   return request.delete(`/projects/${projectId}/testcases/${id}`)
 }
+
+export const getTestCasesByRequirement = (projectId: number, requirementId: number) => {
+  return request.get(`/projects/${projectId}/testcases/by-requirement/${requirementId}`)
+}

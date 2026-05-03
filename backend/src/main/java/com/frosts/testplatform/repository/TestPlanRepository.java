@@ -16,4 +16,8 @@ public interface TestPlanRepository extends JpaRepository<TestPlan, Long> {
     Page<TestPlan> findByProjectIdAndStatus(Long projectId, String status, Pageable pageable);
 
     List<TestPlan> findByProjectIdAndStatus(Long projectId, String status);
+
+    long countByProjectId(Long projectId);
+
+    List<TestPlan> findByProjectId(Long projectId);
 }

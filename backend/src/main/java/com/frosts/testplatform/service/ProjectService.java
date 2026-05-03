@@ -38,8 +38,14 @@ public class ProjectService {
     }
 
     public Project createProject(Project project) {
-        if (projectRepository.existsByCodeAndIsDeletedFalse(project.getCode())) {
+        if (project.getCode() != null && projectRepository.existsByCodeAndIsDeletedFalse(project.getCode())) {
             throw new RuntimeException("项目编码已存在: " + project.getCode());
+        }
+        if (project.getProgress() == null) {
+            project.setProgress(new java.math.BigDecimal("0.00"));
+        }
+        if (project.getHealth() == null) {
+            project.setHealth("NORMAL");
         }
         return projectRepository.save(project);
     }
@@ -53,7 +59,13 @@ public class ProjectService {
         project.setManager(projectDetails.getManager());
         project.setStartDate(projectDetails.getStartDate());
         project.setEndDate(projectDetails.getEndDate());
+        project.setActualEndDate(projectDetails.getActualEndDate());
         project.setStatus(projectDetails.getStatus());
+        project.setCategory(projectDetails.getCategory());
+        project.setProgress(projectDetails.getProgress());
+        project.setEstimatedHours(projectDetails.getEstimatedHours());
+        project.setActualHours(projectDetails.getActualHours());
+        project.setHealth(projectDetails.getHealth());
 
         return projectRepository.save(project);
     }

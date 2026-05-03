@@ -44,6 +44,14 @@ public class TestCaseController {
         return ResponseEntity.ok(ApiResponse.success(testCaseService.updateTestCase(id, testCase)));
     }
 
+    @GetMapping("/by-requirement/{requirementId}")
+    public ResponseEntity<ApiResponse<List<TestCase>>> getTestCasesByRequirement(
+            @PathVariable Long projectId,
+            @PathVariable Long requirementId) {
+        List<TestCase> testCases = testCaseService.getTestCasesByRequirement(projectId, requirementId);
+        return ResponseEntity.ok(ApiResponse.success(testCases));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<ApiResponse<Void>> deleteTestCase(@PathVariable Long id) {
         testCaseService.deleteTestCase(id);

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   Button,
   Card,
@@ -18,15 +19,21 @@ import {
   Tree,
   Descriptions,
   Empty,
+  Typography,
+  message as antMessage,
 } from 'antd'
 import {
   ApartmentOutlined,
+  CopyOutlined,
   DeleteOutlined,
   EditOutlined,
   LockOutlined,
+  UnlockOutlined,
   PlusOutlined,
   SafetyCertificateOutlined,
   UserOutlined,
+  TeamOutlined,
+  IdcardOutlined,
 } from '@ant-design/icons'
 import type { DataNode } from 'antd/es/tree'
 import { ProTable, ProList, DragSortTable, type ActionType, type ProColumns } from '@ant-design/pro-components'
@@ -44,6 +51,7 @@ import {
   getSystemUsers,
   updateOrganizationUnit,
   resetSystemUserPassword,
+  unlockSystemUser,
   updateSystemRole,
   updateSystemUser,
   updateRoleSort,
@@ -57,10 +65,11 @@ import useMessage from '../hooks/useMessage'
 
 interface UserFormValues {
   username: string
-  password?: string
   realName?: string
   email?: string
   phone?: string
+  department?: string
+  position?: string
   enabled?: boolean
   roleIds?: number[]
 }
@@ -119,7 +128,10 @@ const toOrganizationTreeData = (items: OrganizationUnit[]): DataNode[] =>
   }))
 
 const SystemManagement: React.FC = () => {
-  const message = useMessage()
+  const [searchParams] = useSearchParams()
+  const tabFromUrl = searchParams.get('tab')
+  const [activeTab, setActiveTab] = useState(tabFromUrl || 'users')
+  const { message } = useMessage()
   const [overview, setOverview] = useState<SystemOverview>({
     totalUsers: 0,
     enabledUsers: 0,
@@ -141,10 +153,10 @@ const SystemManagement: React.FC = () => {
   const [editingRole, setEditingRole] = useState<Role | null>(null)
   const [editingOrganization, setEditingOrganization] = useState<OrganizationUnit | null>(null)
   const [resettingUser, setResettingUser] = useState<SystemUser | null>(null)
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
   const [userForm] = Form.useForm<UserFormValues>()
   const [roleForm] = Form.useForm<RoleFormValues>()
   const [organizationForm] = Form.useForm<OrganizationFormValues>()
-  const [resetForm] = Form.useForm<{ password: string }>()
   const userActionRef = useRef<ActionType>()
   const roleActionRef = useRef<ActionType>()
 
@@ -190,6 +202,8 @@ const SystemManagement: React.FC = () => {
       realName: record.realName,
       email: record.email,
       phone: record.phone,
+      department: record.department,
+      position: record.position,
       enabled: record.enabled,
       roleIds: record.roles.map((role) => role.id),
     })
@@ -215,14 +229,15 @@ const SystemManagement: React.FC = () => {
           roleIds: payload.roleIds,
         })
         message.success('用户更新成功')
+        setUserModalVisible(false)
       } else {
-        await createSystemUser({
-          ...payload,
-          password: values.password || '',
-        })
+        const response = await createSystemUser(payload)
+        if (response.data?.generatedPassword) {
+          setGeneratedPassword(response.data.generatedPassword)
+        }
         message.success('用户创建成功')
+        setUserModalVisible(false)
       }
-      setUserModalVisible(false)
       userActionRef.current?.reload()
       await loadReferenceData()
     } catch (error) {
@@ -241,9 +256,18 @@ const SystemManagement: React.FC = () => {
     }
   }
 
+  const handleUnlockUser = async (id: number) => {
+    try {
+      await unlockSystemUser(id)
+      message.success('用户解锁成功')
+      userActionRef.current?.reload()
+    } catch (error) {
+      message.error('用户解锁失败')
+    }
+  }
+
   const openResetPassword = (record: SystemUser) => {
     setResettingUser(record)
-    resetForm.resetFields()
     setResetModalVisible(true)
   }
 
@@ -252,11 +276,13 @@ const SystemManagement: React.FC = () => {
       return
     }
 
-    const values = await resetForm.validateFields()
     try {
-      await resetSystemUserPassword(resettingUser.id, values)
-      message.success('密码重置成功')
+      const response = await resetSystemUserPassword(resettingUser.id)
+      if (response.data?.generatedPassword) {
+        setGeneratedPassword(response.data.generatedPassword)
+      }
       setResetModalVisible(false)
+      message.success('密码重置成功')
     } catch (error) {
       message.error('密码重置失败')
     }
@@ -433,11 +459,20 @@ const SystemManagement: React.FC = () => {
       ellipsis: true,
     },
     {
-      title: '手机号',
-      dataIndex: 'phone',
+      title: '部门',
+      dataIndex: 'department',
       search: false,
-      width: 130,
+      width: 120,
       ellipsis: true,
+      render: (_: any, record: SystemUser) => record.department || '—',
+    },
+    {
+      title: '职位',
+      dataIndex: 'position',
+      search: false,
+      width: 100,
+      ellipsis: true,
+      render: (_: any, record: SystemUser) => record.position || '—',
     },
     {
       title: '角色',
@@ -458,23 +493,35 @@ const SystemManagement: React.FC = () => {
       title: '状态',
       dataIndex: 'enabled',
       search: false,
-      width: 80,
+      width: 100,
       render: (_, record) => (
-        <Tag color={record.enabled ? 'green' : 'default'}>
-          {record.enabled ? '启用' : '停用'}
-        </Tag>
+        <Space size={4}>
+          <Tag color={record.enabled ? 'green' : 'default'}>
+            {record.enabled ? '启用' : '停用'}
+          </Tag>
+          {record.accountNonLocked === false && (
+            <Tag color="red">锁定</Tag>
+          )}
+        </Space>
       ),
     },
     {
       title: '操作',
       valueType: 'option',
-      width: 220,
+      width: 280,
       fixed: 'right',
       render: (_, record) => (
         <Space size={16}>
           <Button type="link" style={{ padding: 0 }} icon={<EditOutlined />} onClick={() => openEditUser(record)}>
             编辑
           </Button>
+          {record.accountNonLocked === false && (
+            <Popconfirm title="确定解锁此用户吗？" onConfirm={() => handleUnlockUser(record.id)}>
+              <Button type="link" style={{ padding: 0 }} icon={<UnlockOutlined />}>
+                解锁
+              </Button>
+            </Popconfirm>
+          )}
           <Button type="link" style={{ padding: 0 }} icon={<LockOutlined />} onClick={() => openResetPassword(record)}>
             重置密码
           </Button>
@@ -575,6 +622,8 @@ const SystemManagement: React.FC = () => {
       </Row>
 
       <Tabs
+        activeKey={activeTab}
+        onChange={(key) => setActiveTab(key)}
         items={[
           {
             key: 'users',
@@ -752,7 +801,7 @@ const SystemManagement: React.FC = () => {
                 rowKey="id"
                 headerTitle="权限查看"
                 itemLayout="horizontal"
-                variant="borderless"
+                // variant="borderless"
                 split={true}
                 pagination={{
                   pageSize: 10,
@@ -795,16 +844,11 @@ const SystemManagement: React.FC = () => {
             <Input placeholder="请输入用户名" disabled={Boolean(editingUser)} />
           </Form.Item>
           {!editingUser && (
-            <Form.Item
-              name="password"
-              label="初始密码"
-              rules={[
-                { required: true, message: '请输入初始密码' },
-                { min: 6, message: '密码至少 6 位' },
-              ]}
-            >
-              <Input.Password placeholder="请输入初始密码" />
-            </Form.Item>
+            <div style={{ marginBottom: 24, padding: '12px 16px', background: 'var(--panel-bg-elevated)', borderRadius: 8 }}>
+              <div style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 4 }}>
+                初始密码将由系统自动生成，创建成功后请及时告知用户
+              </div>
+            </div>
           )}
           <Form.Item name="realName" label="姓名">
             <Input placeholder="请输入姓名" />
@@ -815,6 +859,18 @@ const SystemManagement: React.FC = () => {
           <Form.Item name="phone" label="手机号">
             <Input placeholder="请输入手机号" />
           </Form.Item>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="department" label="部门">
+                <Input placeholder="请输入部门" prefix={<TeamOutlined />} />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="position" label="职位">
+                <Input placeholder="请输入职位" prefix={<IdcardOutlined />} />
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item name="roleIds" label="角色">
             <Select mode="multiple" placeholder="请选择角色" options={roleOptions} />
           </Form.Item>
@@ -914,20 +970,50 @@ const SystemManagement: React.FC = () => {
         open={resetModalVisible}
         onOk={submitResetPassword}
         onCancel={() => setResetModalVisible(false)}
-        forceRender
+        okText="确认重置"
       >
-        <Form form={resetForm} layout="vertical">
-          <Form.Item
-            name="password"
-            label="新密码"
-            rules={[
-              { required: true, message: '请输入新密码' },
-              { min: 6, message: '密码至少 6 位' },
-            ]}
-          >
-            <Input.Password placeholder="请输入新密码" />
-          </Form.Item>
-        </Form>
+        <div style={{ padding: '12px 0' }}>
+          <p>确定要为用户 <strong>{resettingUser?.username}</strong> 重置密码吗？</p>
+          <p style={{ color: 'var(--text-muted, #999)', fontSize: 13 }}>系统将自动生成新的随机密码，重置后请及时告知用户</p>
+        </div>
+      </Modal>
+
+      <Modal
+        title="密码信息"
+        open={generatedPassword !== null}
+        onCancel={() => setGeneratedPassword(null)}
+        footer={<Button type="primary" onClick={() => setGeneratedPassword(null)}>知道了</Button>}
+      >
+        <div style={{ padding: '12px 0' }}>
+          <p>系统已自动生成以下密码，请妥善保管并告知用户：</p>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '12px 16px',
+            background: 'var(--panel-bg-elevated)',
+            borderRadius: 8,
+            marginTop: 12,
+          }}>
+            <Typography.Text strong style={{ fontSize: 18, fontFamily: 'monospace', letterSpacing: 1 }}>
+              {generatedPassword}
+            </Typography.Text>
+            <Button
+              type="text"
+              size="small"
+              icon={<CopyOutlined />}
+              onClick={() => {
+                navigator.clipboard.writeText(generatedPassword || '')
+                antMessage.success('密码已复制到剪贴板')
+              }}
+            >
+              复制
+            </Button>
+          </div>
+          <p style={{ color: 'var(--text-muted)', fontSize: 12, marginTop: 12 }}>
+            关闭此窗口后将无法再次查看此密码，请务必复制保存
+          </p>
+        </div>
       </Modal>
     </div>
   )

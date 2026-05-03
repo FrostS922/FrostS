@@ -1,19 +1,21 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import {
   Table, Button, Modal, Form, Input, Select, Space, Popconfirm, Tag,
-  Drawer, Descriptions, Row, Col, Tooltip,
+  Drawer, Descriptions, Row, Col, Tooltip, Progress,
 } from 'antd'
 import {
   PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined,
   SendOutlined, CheckCircleOutlined, CloseCircleOutlined,
   SearchOutlined, ReloadOutlined,
-  FileTextOutlined, ClockCircleOutlined, CheckSquareOutlined, StopOutlined,
+  FileTextOutlined, ClockCircleOutlined, CheckSquareOutlined,
+  LinkOutlined,
 } from '@ant-design/icons'
 import dayjs from 'dayjs'
 import {
   getRequirements, createRequirement, updateRequirement,
   deleteRequirement, updateRequirementStatus, getRootRequirements,
+  getRequirementCoverage,
   type RequirementQueryParams,
 } from '../api/requirement'
 import useMessage from '../hooks/useMessage'
@@ -24,6 +26,8 @@ const TYPE_MAP: Record<string, { label: string; color: string }> = {
   FUNCTIONAL: { label: '功能需求', color: 'blue' },
   NON_FUNCTIONAL: { label: '非功能需求', color: 'purple' },
   INTERFACE: { label: '接口需求', color: 'cyan' },
+  DATA: { label: '数据需求', color: 'geekblue' },
+  SECURITY: { label: '安全需求', color: 'magenta' },
 }
 
 const PRIORITY_MAP: Record<string, { label: string; color: string }> = {
@@ -37,19 +41,36 @@ const STATUS_MAP: Record<string, { label: string; color: string }> = {
   REVIEWING: { label: '评审中', color: 'processing' },
   APPROVED: { label: '已批准', color: 'success' },
   REJECTED: { label: '已拒绝', color: 'error' },
+  IMPLEMENTING: { label: '实现中', color: 'blue' },
+  TESTING: { label: '测试中', color: 'purple' },
+  COMPLETED: { label: '已完成', color: 'success' },
+}
+
+const SOURCE_MAP: Record<string, string> = {
+  CUSTOMER: '客户反馈',
+  INTERNAL: '内部规划',
+  MARKET: '市场调研',
+  COMPETITOR: '竞品分析',
+  REGULATION: '法规要求',
+  OTHER: '其他',
 }
 
 // ── Component ──────────────────────────────────────────
 
 const RequirementList: React.FC = () => {
   const { id: projectId } = useParams<{ id: string }>()
-  const message = useMessage()
+  const navigate = useNavigate()
+  const { message, showError } = useMessage()
   const [form] = Form.useForm()
 
   // Data
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 })
+
+  // Coverage data for drawer
+  const [coverageData, setCoverageData] = useState<any>(null)
+  const [coverageLoading, setCoverageLoading] = useState(false)
 
   // Filters
   const [searchText, setSearchText] = useState('')
@@ -85,8 +106,8 @@ const RequirementList: React.FC = () => {
         setData(response.data || [])
         setPagination((prev) => ({ ...prev, total: response.total || 0, current: page ?? prev.current }))
       }
-    } catch {
-      message.error('获取需求列表失败')
+    } catch (err: any) {
+      showError(err, '获取需求列表失败')
     } finally {
       setLoading(false)
     }
@@ -156,6 +177,16 @@ const RequirementList: React.FC = () => {
   const openDetail = (record: any) => {
     setViewingRequirement(record)
     setDrawerVisible(true)
+    setCoverageData(null)
+    if (projectId && record.id) {
+      setCoverageLoading(true)
+      getRequirementCoverage(Number(projectId), record.id)
+        .then((res: any) => {
+          if (res.code === 200) setCoverageData(res.data)
+        })
+        .catch(() => { /* ignore */ })
+        .finally(() => setCoverageLoading(false))
+    }
   }
 
   const handleSubmit = async () => {
@@ -180,8 +211,8 @@ const RequirementList: React.FC = () => {
       }
       setModalVisible(false)
       fetchData()
-    } catch {
-      message.error(editingRequirement ? '更新失败' : '创建失败')
+    } catch (err: any) {
+      showError(err, editingRequirement ? '更新失败' : '创建失败')
     }
   }
 
@@ -190,8 +221,8 @@ const RequirementList: React.FC = () => {
       await deleteRequirement(Number(projectId), id)
       message.success('删除成功')
       fetchData()
-    } catch {
-      message.error('删除失败')
+    } catch (err: any) {
+      showError(err, '删除失败')
     }
   }
 
@@ -200,8 +231,8 @@ const RequirementList: React.FC = () => {
       await updateRequirementStatus(Number(projectId), id, newStatus)
       message.success(`已${label}`)
       fetchData()
-    } catch {
-      message.error('操作失败')
+    } catch (err: any) {
+      showError(err, '操作失败')
     }
   }
 
@@ -261,6 +292,59 @@ const RequirementList: React.FC = () => {
       key: 'assignedTo',
       width: 110,
       render: (text: string) => text || <span style={{ color: 'var(--text-muted)' }}>未指派</span>,
+    },
+    {
+      title: '故事点',
+      dataIndex: 'storyPoints',
+      key: 'storyPoints',
+      width: 80,
+      render: (val: number) => val ?? '—',
+    },
+    {
+      title: '预估工时',
+      dataIndex: 'estimatedHours',
+      key: 'estimatedHours',
+      width: 90,
+      render: (val: number) => val ?? '—',
+    },
+    {
+      title: '实际工时',
+      dataIndex: 'actualHours',
+      key: 'actualHours',
+      width: 90,
+      render: (val: number) => val ?? '—',
+    },
+    {
+      title: '截止日期',
+      dataIndex: 'dueDate',
+      key: 'dueDate',
+      width: 110,
+      render: (text: string) => text ? dayjs(text).format('YYYY-MM-DD') : '—',
+    },
+    {
+      title: '来源',
+      dataIndex: 'source',
+      key: 'source',
+      width: 100,
+      render: (source: string) => SOURCE_MAP[source] || source || '—',
+    },
+    {
+      title: '用例覆盖',
+      key: 'coverage',
+      width: 120,
+      render: (_: any, record: any) => {
+        const count = record.testCaseCount ?? 0
+        if (count === 0) {
+          return <Tag color="error">未覆盖</Tag>
+        }
+        return (
+          <Tooltip title={`关联 ${count} 个测试用例`}>
+            <Tag color="success" style={{ cursor: 'pointer' }} onClick={() => openDetail(record)}>
+              <LinkOutlined /> {count} 个用例
+            </Tag>
+          </Tooltip>
+        )
+      },
     },
     {
       title: '创建人',
@@ -488,6 +572,39 @@ const RequirementList: React.FC = () => {
               </Form.Item>
             </Col>
           </Row>
+          <Row gutter={16}>
+            <Col span={8}>
+              <Form.Item name="storyPoints" label="故事点">
+                <Input type="number" min={0} placeholder="故事点" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="estimatedHours" label="预估工时 (小时)">
+                <Input type="number" min={0} placeholder="预估工时" />
+              </Form.Item>
+            </Col>
+            <Col span={8}>
+              <Form.Item name="actualHours" label="实际工时 (小时)">
+                <Input type="number" min={0} placeholder="实际工时" />
+              </Form.Item>
+            </Col>
+          </Row>
+          <Row gutter={16}>
+            <Col span={12}>
+              <Form.Item name="dueDate" label="截止日期">
+                <Input type="date" />
+              </Form.Item>
+            </Col>
+            <Col span={12}>
+              <Form.Item name="source" label="需求来源">
+                <Select placeholder="请选择来源">
+                  {Object.entries(SOURCE_MAP).map(([k, v]) => (
+                    <Select.Option key={k} value={k}>{v}</Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Col>
+          </Row>
           <Form.Item name="parentId" label="父需求">
             <Select
               placeholder="无（顶层需求）"
@@ -503,8 +620,16 @@ const RequirementList: React.FC = () => {
             />
           </Form.Item>
           <Form.Item name="description" label="描述">
-            <Input.TextArea rows={4} placeholder="请输入需求详细描述..." />
+            <Input.TextArea rows={3} placeholder="请输入需求详细描述..." />
           </Form.Item>
+          <Form.Item name="acceptanceCriteria" label="验收标准">
+            <Input.TextArea rows={3} placeholder="请输入验收标准..." />
+          </Form.Item>
+          {editingRequirement?.status === 'REJECTED' && (
+            <Form.Item name="rejectedReason" label="拒绝原因">
+              <Input.TextArea rows={2} placeholder="请输入拒绝原因..." />
+            </Form.Item>
+          )}
         </Form>
       </Modal>
 
@@ -554,6 +679,24 @@ const RequirementList: React.FC = () => {
                 <Descriptions.Item label="父需求">
                   {viewingRequirement.parent?.title || <span className="req-detail-empty">无</span>}
                 </Descriptions.Item>
+                <Descriptions.Item label="故事点">
+                  {viewingRequirement.storyPoints ?? '—'}
+                </Descriptions.Item>
+                <Descriptions.Item label="预估工时">
+                  {viewingRequirement.estimatedHours ? `${viewingRequirement.estimatedHours} 小时` : '—'}
+                </Descriptions.Item>
+                <Descriptions.Item label="实际工时">
+                  {viewingRequirement.actualHours ? `${viewingRequirement.actualHours} 小时` : '—'}
+                </Descriptions.Item>
+                <Descriptions.Item label="截止日期">
+                  {viewingRequirement.dueDate ? dayjs(viewingRequirement.dueDate).format('YYYY-MM-DD') : '—'}
+                </Descriptions.Item>
+                <Descriptions.Item label="完成日期">
+                  {viewingRequirement.completedDate ? dayjs(viewingRequirement.completedDate).format('YYYY-MM-DD') : '—'}
+                </Descriptions.Item>
+                <Descriptions.Item label="需求来源">
+                  {SOURCE_MAP[viewingRequirement.source] || viewingRequirement.source || '—'}
+                </Descriptions.Item>
               </Descriptions>
             </div>
 
@@ -563,6 +706,109 @@ const RequirementList: React.FC = () => {
                 {viewingRequirement.description || <span className="req-detail-empty">暂无描述</span>}
               </div>
             </div>
+
+            <div className="req-detail-section">
+              <div className="req-detail-section-title">验收标准</div>
+              <div className="req-detail-desc">
+                {viewingRequirement.acceptanceCriteria || <span className="req-detail-empty">暂无验收标准</span>}
+              </div>
+            </div>
+
+            <div className="req-detail-section">
+              <div className="req-detail-section-title">
+                <LinkOutlined /> 关联测试用例
+              </div>
+              {coverageLoading ? (
+                <div style={{ textAlign: 'center', padding: 16, color: 'var(--text-muted)' }}>加载中...</div>
+              ) : coverageData && coverageData.totalTestCases > 0 ? (
+                <>
+                  <div style={{ marginBottom: 12 }}>
+                    <Space>
+                      <span>关联用例数: <strong>{coverageData.totalTestCases}</strong></span>
+                      <span>激活用例数: <strong style={{ color: '#52c41a' }}>{coverageData.activeTestCases}</strong></span>
+                      <span>覆盖率: <strong style={{ color: coverageData.coverageRate >= 80 ? '#52c41a' : coverageData.coverageRate >= 50 ? '#faad14' : '#ff4d4f' }}>{coverageData.coverageRate}%</strong></span>
+                    </Space>
+                    <Progress
+                      percent={coverageData.coverageRate}
+                      size="small"
+                      status={coverageData.coverageRate >= 80 ? 'success' : coverageData.coverageRate >= 50 ? 'normal' : 'exception'}
+                      style={{ marginTop: 8 }}
+                    />
+                  </div>
+                  <Table
+                    dataSource={coverageData.testCases || []}
+                    rowKey="id"
+                    size="small"
+                    pagination={false}
+                    columns={[
+                      {
+                        title: '编号',
+                        dataIndex: 'caseNumber',
+                        width: 140,
+                        render: (text: string) => (
+                          <Tag
+                            color="blue"
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => navigate(`/projects/${projectId}/testcases`)}
+                          >
+                            {text || '—'}
+                          </Tag>
+                        ),
+                      },
+                      { title: '标题', dataIndex: 'title', ellipsis: true },
+                      {
+                        title: '类型',
+                        dataIndex: 'type',
+                        width: 100,
+                        render: (type: string) => {
+                          const TC_TYPE_MAP: Record<string, { label: string; color: string }> = {
+                            FUNCTIONAL: { label: '功能测试', color: 'blue' },
+                            INTEGRATION: { label: '集成测试', color: 'purple' },
+                            PERFORMANCE: { label: '性能测试', color: 'orange' },
+                            SECURITY: { label: '安全测试', color: 'red' },
+                          }
+                          const info = TC_TYPE_MAP[type]
+                          return info ? <Tag color={info.color}>{info.label}</Tag> : <Tag>{type}</Tag>
+                        },
+                      },
+                      {
+                        title: '优先级',
+                        dataIndex: 'priority',
+                        width: 80,
+                        render: (priority: string) => {
+                          const PRIORITY_COLORS: Record<string, string> = { HIGH: 'red', MEDIUM: 'orange', LOW: 'green' }
+                          const PRIORITY_LABELS: Record<string, string> = { HIGH: '高', MEDIUM: '中', LOW: '低' }
+                          return <Tag color={PRIORITY_COLORS[priority]}>{PRIORITY_LABELS[priority] || priority}</Tag>
+                        },
+                      },
+                      {
+                        title: '状态',
+                        dataIndex: 'status',
+                        width: 90,
+                        render: (status: string) => {
+                          const STATUS_COLORS: Record<string, string> = { DRAFT: 'default', ACTIVE: 'success', OBSOLETE: 'error' }
+                          const STATUS_LABELS: Record<string, string> = { DRAFT: '草稿', ACTIVE: '激活', OBSOLETE: '废弃' }
+                          return <Tag color={STATUS_COLORS[status]}>{STATUS_LABELS[status] || status}</Tag>
+                        },
+                      },
+                    ]}
+                  />
+                </>
+              ) : (
+                <div style={{ textAlign: 'center', padding: 16, color: 'var(--text-muted)' }}>
+                  暂无关联的测试用例
+                </div>
+              )}
+            </div>
+
+            {viewingRequirement.rejectedReason && (
+              <div className="req-detail-section">
+                <div className="req-detail-section-title">拒绝原因</div>
+                <div className="req-detail-desc" style={{ color: '#ff4d4f' }}>
+                  {viewingRequirement.rejectedReason}
+                </div>
+              </div>
+            )}
 
             <div className="req-detail-section">
               <div className="req-detail-section-title">审计信息</div>

@@ -23,4 +23,8 @@ public interface RequirementRepository extends JpaRepository<Requirement, Long> 
     List<Requirement> findByProjectIdAndStatusWithoutPaging(@Param("projectId") Long projectId, @Param("status") String status);
 
     long countByProjectIdAndStatus(Long projectId, String status);
+
+    long countByProjectId(Long projectId);
+
+    List<Requirement> findByProjectId(Long projectId);
 }

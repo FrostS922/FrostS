@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.LocalDate;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
@@ -16,6 +18,9 @@ public class Requirement extends BaseEntity {
 
     @Column(columnDefinition = "TEXT")
     private String description;
+
+    @Column(name = "acceptance_criteria", columnDefinition = "TEXT")
+    private String acceptanceCriteria;
 
     @Column(length = 50, unique = true)
     private String requirementNumber;
@@ -39,4 +44,31 @@ public class Requirement extends BaseEntity {
 
     @Column(name = "assigned_to", length = 50)
     private String assignedTo;
+
+    @Column(name = "story_points")
+    private Integer storyPoints;
+
+    @Column(name = "estimated_hours")
+    private Integer estimatedHours;
+
+    @Column(name = "actual_hours")
+    private Integer actualHours;
+
+    @Column(name = "due_date")
+    private LocalDate dueDate;
+
+    @Column(name = "completed_date")
+    private LocalDate completedDate;
+
+    @Column(length = 50)
+    private String source;
+
+    @Column(name = "rejected_reason", columnDefinition = "TEXT")
+    private String rejectedReason;
+
+    @Transient
+    private Long testCaseCount;
+
+    @Transient
+    private Double coverageRate;
 }

@@ -41,8 +41,12 @@ export interface SystemUser {
   realName?: string
   email?: string
   phone?: string
+  department?: string
+  position?: string
   enabled: boolean
+  accountNonLocked?: boolean
   roles: RoleSummary[]
+  generatedPassword?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -109,7 +113,7 @@ export const getSystemUsers = (params: PageParams) => {
 
 export const createSystemUser = (data: {
   username: string
-  password: string
+  password?: string
   realName?: string
   email?: string
   phone?: string
@@ -137,8 +141,12 @@ export const deleteSystemUser = (id: number) => {
   return request.delete(`/system/users/${id}`) as unknown as Promise<ApiResponse<null>>
 }
 
-export const resetSystemUserPassword = (id: number, data: { password: string }) => {
-  return request.post(`/system/users/${id}/reset-password`, data) as unknown as Promise<ApiResponse<null>>
+export const resetSystemUserPassword = (id: number) => {
+  return request.post(`/system/users/${id}/reset-password`) as unknown as Promise<ApiResponse<{ generatedPassword: string }>>
+}
+
+export const unlockSystemUser = (id: number) => {
+  return request.post(`/system/users/${id}/unlock`) as unknown as Promise<ApiResponse<null>>
 }
 
 export const getSystemRoles = (params: PageParams) => {

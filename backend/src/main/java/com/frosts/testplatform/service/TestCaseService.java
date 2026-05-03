@@ -35,6 +35,27 @@ public class TestCaseService {
     public TestCase createTestCase(TestCase testCase) {
         String caseNumber = generateCaseNumber(testCase.getProject().getId());
         testCase.setCaseNumber(caseNumber);
+        if (testCase.getStatus() == null) {
+            testCase.setStatus("DRAFT");
+        }
+        if (testCase.getReviewStatus() == null) {
+            testCase.setReviewStatus("PENDING");
+        }
+        if (testCase.getVersion() == null) {
+            testCase.setVersion("1.0");
+        }
+        if (testCase.getIsAutomated() == null) {
+            testCase.setIsAutomated(false);
+        }
+        if (testCase.getPassCount() == null) {
+            testCase.setPassCount(0);
+        }
+        if (testCase.getFailCount() == null) {
+            testCase.setFailCount(0);
+        }
+        if (testCase.getTotalExecutions() == null) {
+            testCase.setTotalExecutions(0);
+        }
         return testCaseRepository.save(testCase);
     }
 
@@ -46,13 +67,39 @@ public class TestCaseService {
         testCase.setDescription(testCaseDetails.getDescription());
         testCase.setPreconditions(testCaseDetails.getPreconditions());
         testCase.setSteps(testCaseDetails.getSteps());
+        testCase.setTestData(testCaseDetails.getTestData());
         testCase.setExpectedResults(testCaseDetails.getExpectedResults());
         testCase.setActualResults(testCaseDetails.getActualResults());
+        testCase.setPostconditions(testCaseDetails.getPostconditions());
         testCase.setType(testCaseDetails.getType());
         testCase.setPriority(testCaseDetails.getPriority());
         testCase.setStatus(testCaseDetails.getStatus());
+        testCase.setExecutionTime(testCaseDetails.getExecutionTime());
+        testCase.setIsAutomated(testCaseDetails.getIsAutomated());
+        testCase.setAutomationScript(testCaseDetails.getAutomationScript());
+        testCase.setReviewer(testCaseDetails.getReviewer());
+        testCase.setReviewStatus(testCaseDetails.getReviewStatus());
+        testCase.setReviewComments(testCaseDetails.getReviewComments());
+        testCase.setTags(testCaseDetails.getTags());
+        testCase.setVersion(testCaseDetails.getVersion());
         testCase.setModule(testCaseDetails.getModule());
         testCase.setRequirement(testCaseDetails.getRequirement());
+
+        return testCaseRepository.save(testCase);
+    }
+
+    public TestCase recordExecution(Long id, boolean passed, String executedBy) {
+        TestCase testCase = testCaseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("测试用例不存在: " + id));
+
+        testCase.setTotalExecutions(testCase.getTotalExecutions() + 1);
+        if (passed) {
+            testCase.setPassCount(testCase.getPassCount() + 1);
+        } else {
+            testCase.setFailCount(testCase.getFailCount() + 1);
+        }
+        testCase.setLastExecutedAt(java.time.LocalDateTime.now());
+        testCase.setLastExecutedBy(executedBy);
 
         return testCaseRepository.save(testCase);
     }

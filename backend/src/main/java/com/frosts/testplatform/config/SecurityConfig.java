@@ -1,9 +1,11 @@
 package com.frosts.testplatform.config;
 
 import com.frosts.testplatform.security.CustomUserDetailsService;
+import com.frosts.testplatform.security.IpBanFilter;
 import com.frosts.testplatform.security.JwtAuthenticationFilter;
 import com.frosts.testplatform.security.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +35,7 @@ public class SecurityConfig {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final CustomUserDetailsService userDetailsService;
+    private final IpBanFilter ipBanFilter;
 
     @Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
@@ -59,11 +62,27 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/auth/change-password").authenticated()
+                .requestMatchers("/auth/mfa/setup").authenticated()
+                .requestMatchers("/auth/mfa/verify-setup").authenticated()
+                .requestMatchers("/auth/mfa/status").authenticated()
+                .requestMatchers("/auth/mfa").authenticated()
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
+                .requestMatchers("/files/avatars/**").permitAll()
+                .requestMatchers("/error-report").permitAll()
+                .requestMatchers("/performance-report").permitAll()
                 .anyRequest().authenticated()
             )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((request, response, authException) -> {
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                    response.setContentType("application/json;charset=UTF-8");
+                    response.getWriter().write("{\"code\":401,\"message\":\"未认证，请先登录\",\"data\":null}");
+                })
+            )
+            .addFilterBefore(ipBanFilter, UsernamePasswordAuthenticationFilter.class)
             .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

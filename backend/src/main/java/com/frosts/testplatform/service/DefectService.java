@@ -1,8 +1,10 @@
 package com.frosts.testplatform.service;
 
 import com.frosts.testplatform.entity.Defect;
+import com.frosts.testplatform.event.NotificationEvent;
 import com.frosts.testplatform.repository.DefectRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import java.util.Map;
 public class DefectService {
 
     private final DefectRepository defectRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
     public Page<Defect> getDefectsByProject(Long projectId, Pageable pageable) {
@@ -37,13 +40,37 @@ public class DefectService {
     public Defect createDefect(Defect defect) {
         String defectNumber = generateDefectNumber(defect.getProject().getId());
         defect.setDefectNumber(defectNumber);
-        defect.setStatus("NEW");
-        return defectRepository.save(defect);
+        if (defect.getStatus() == null) {
+            defect.setStatus("NEW");
+        }
+        if (defect.getReopenCount() == null) {
+            defect.setReopenCount(0);
+        }
+        Defect saved = defectRepository.save(defect);
+
+        if (defect.getAssignedTo() != null) {
+            eventPublisher.publishEvent(NotificationEvent.builder()
+                    .source(this)
+                    .type("BUSINESS")
+                    .category("DEFECT_ASSIGNED")
+                    .title("新缺陷分配: " + defect.getTitle())
+                    .content("缺陷编号 " + defectNumber + " 已分配给您处理")
+                    .priority("HIGH")
+                    .targetType("DEFECT")
+                    .targetId(saved.getId())
+                    .targetUrl("/projects/" + defect.getProject().getId() + "/defects")
+                    .build());
+        }
+
+        return saved;
     }
 
     public Defect updateDefect(Long id, Defect defectDetails) {
         Defect defect = defectRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("缺陷不存在: " + id));
+
+        String oldStatus = defect.getStatus();
+        String newStatus = defectDetails.getStatus();
 
         defect.setTitle(defectDetails.getTitle());
         defect.setDescription(defectDetails.getDescription());
@@ -52,12 +79,53 @@ public class DefectService {
         defect.setActualBehavior(defectDetails.getActualBehavior());
         defect.setSeverity(defectDetails.getSeverity());
         defect.setPriority(defectDetails.getPriority());
-        defect.setStatus(defectDetails.getStatus());
+        defect.setStatus(newStatus);
         defect.setType(defectDetails.getType());
         defect.setAssignedTo(defectDetails.getAssignedTo());
         defect.setEnvironment(defectDetails.getEnvironment());
+        defect.setFoundInVersion(defectDetails.getFoundInVersion());
+        defect.setFixedInVersion(defectDetails.getFixedInVersion());
+        defect.setComponent(defectDetails.getComponent());
+        defect.setReproducibility(defectDetails.getReproducibility());
+        defect.setImpact(defectDetails.getImpact());
+        defect.setWorkaround(defectDetails.getWorkaround());
+        defect.setRootCause(defectDetails.getRootCause());
+        defect.setDuplicateOf(defectDetails.getDuplicateOf());
+        defect.setSource(defectDetails.getSource());
         defect.setTestCase(defectDetails.getTestCase());
         defect.setTestPlanCase(defectDetails.getTestPlanCase());
+
+        // Auto-handle status transitions
+        if (newStatus != null && !newStatus.equals(oldStatus)) {
+            if ("RESOLVED".equals(newStatus) && !"RESOLVED".equals(oldStatus)) {
+                defect.setResolvedBy(defectDetails.getResolvedBy());
+                defect.setResolvedAt(LocalDateTime.now());
+            }
+            if ("CLOSED".equals(newStatus) && !"CLOSED".equals(oldStatus)) {
+                defect.setClosedAt(LocalDateTime.now());
+            }
+            if ("VERIFIED".equals(newStatus)) {
+                defect.setVerifiedBy(defectDetails.getVerifiedBy());
+                defect.setVerifiedAt(LocalDateTime.now());
+            }
+            if ("REOPENED".equals(newStatus) && ("RESOLVED".equals(oldStatus) || "CLOSED".equals(oldStatus))) {
+                defect.setReopenCount(defect.getReopenCount() + 1);
+                defect.setResolvedAt(null);
+                defect.setResolvedBy(null);
+                defect.setClosedAt(null);
+            }
+
+            eventPublisher.publishEvent(NotificationEvent.builder()
+                    .source(this)
+                    .type("BUSINESS")
+                    .category("DEFECT_STATUS_CHANGED")
+                    .title("缺陷状态变更: " + defect.getTitle())
+                    .content("缺陷编号 " + defect.getDefectNumber() + " 状态从 " + oldStatus + " 变更为 " + newStatus)
+                    .targetType("DEFECT")
+                    .targetId(id)
+                    .targetUrl("/projects/" + defect.getProject().getId() + "/defects")
+                    .build());
+        }
 
         return defectRepository.save(defect);
     }
@@ -80,6 +148,32 @@ public class DefectService {
 
         defect.setStatus("CLOSED");
         defect.setClosedAt(LocalDateTime.now());
+
+        return defectRepository.save(defect);
+    }
+
+    public Defect verifyDefect(Long id, String verifiedBy) {
+        Defect defect = defectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("缺陷不存在: " + id));
+
+        defect.setStatus("VERIFIED");
+        defect.setVerifiedBy(verifiedBy);
+        defect.setVerifiedAt(LocalDateTime.now());
+
+        return defectRepository.save(defect);
+    }
+
+    public Defect reopenDefect(Long id) {
+        Defect defect = defectRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("缺陷不存在: " + id));
+
+        defect.setStatus("REOPENED");
+        defect.setReopenCount(defect.getReopenCount() + 1);
+        defect.setResolvedAt(null);
+        defect.setResolvedBy(null);
+        defect.setClosedAt(null);
+        defect.setVerifiedAt(null);
+        defect.setVerifiedBy(null);
 
         return defectRepository.save(defect);
     }

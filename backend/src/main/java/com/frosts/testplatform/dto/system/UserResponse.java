@@ -9,8 +9,13 @@ public record UserResponse(
         String realName,
         String email,
         String phone,
+        String avatar,
+        String department,
+        String position,
         Boolean enabled,
+        Boolean accountNonLocked,
         List<RoleSummaryResponse> roles,
+        String generatedPassword,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
