@@ -872,3 +872,48 @@ h6 {
     padding: 12px;
   }
 }
+
+.monitor-dashboard-content {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.monitor-dashboard-content::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.monitor-dashboard-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.monitor-dashboard-content::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 3px;
+}
+
+.monitor-dashboard-content::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.monitor-dashboard-content::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+.dark-table .ant-table-thead > tr > th {
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: #999 !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+.dark-table .ant-table-tbody > tr > td {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+.dark-table .ant-table-tbody > tr:hover > td {
+  background: rgba(255, 255, 255, 0.06) !important;
+}
+
+.dark-table .ant-table-cell {
+  color: #ccc;
+}

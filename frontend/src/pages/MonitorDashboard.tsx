@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react'
-import { Card, Row, Col, Statistic, Tag, Table, Badge, Space, Typography } from 'antd'
+import { Card, Row, Col, Statistic, Tag, Table, Badge, Space, Typography, Tooltip } from 'antd'
 import {
   ThunderboltOutlined,
   SafetyOutlined,
@@ -10,7 +10,10 @@ import {
   LinkOutlined,
   DisconnectOutlined,
   AlertOutlined,
+  ArrowLeftOutlined,
+  HomeOutlined,
 } from '@ant-design/icons'
+import { useNavigate } from 'react-router-dom'
 import { Gauge, Line } from '@ant-design/charts'
 import { useMonitorWebSocket } from '@/hooks/useMonitorWebSocket'
 import { getRecentAlerts, type RecentAlert } from '@/api/monitor'
@@ -57,6 +60,7 @@ const priorityColor = (priority: string): string => {
 }
 
 const MonitorDashboard: React.FC = () => {
+  const navigate = useNavigate()
   const { connected, performanceData, lastUpdate } = useMonitorWebSocket(true)
   const [currentTime, setCurrentTime] = useState(new Date())
   const [alerts, setAlerts] = useState<RecentAlert[]>([])
@@ -185,9 +189,17 @@ const MonitorDashboard: React.FC = () => {
   }
 
   return (
-    <div style={{ background: '#0a1628', color: '#e0e0e0', minHeight: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+    <div style={{ background: '#0a1628', color: '#e0e0e0', height: '100vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       <div style={headerStyle}>
         <Space size={16}>
+          <Tooltip title="返回仪表盘">
+            <ArrowLeftOutlined
+              style={{ fontSize: 18, color: '#999', cursor: 'pointer', transition: 'color 0.2s' }}
+              onClick={() => navigate('/dashboard')}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#999')}
+            />
+          </Tooltip>
           <ThunderboltOutlined style={{ fontSize: 24, color: '#1677ff' }} />
           <span style={{ fontSize: 20, fontWeight: 700, color: '#fff' }}>FrostS 监控大屏</span>
         </Space>
@@ -205,14 +217,22 @@ const MonitorDashboard: React.FC = () => {
           <Text style={{ color: '#fff', fontSize: 18, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
             {currentTime.toLocaleTimeString()}
           </Text>
+          <Tooltip title="返回首页">
+            <HomeOutlined
+              style={{ fontSize: 16, color: '#999', cursor: 'pointer', transition: 'color 0.2s' }}
+              onClick={() => navigate('/dashboard')}
+              onMouseEnter={(e) => (e.currentTarget.style.color = '#fff')}
+              onMouseLeave={(e) => (e.currentTarget.style.color = '#999')}
+            />
+          </Tooltip>
         </Space>
       </div>
 
-      <div style={{ flex: 1, padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 16, overflow: 'hidden' }}>
+      <div className="monitor-dashboard-content" style={{ flex: 1, padding: '16px 24px', display: 'flex', flexDirection: 'column', gap: 16, overflow: 'auto' }}>
         <Row gutter={[12, 12]} style={{ flex: '0 0 auto' }}>
           {gaugeConfigs.map(({ name, cfg, value, rating, percent }) => (
             <Col span={4} key={name}>
-              <Card style={darkCardStyle} bodyStyle={{ padding: '12px 16px' }}>
+              <Card style={darkCardStyle} styles={{ body: { padding: '12px 16px' } }}>
                 <div style={{ textAlign: 'center' }}>
                   <Text style={{ color: cfg.color, fontSize: 13, fontWeight: 600 }}>{cfg.label}</Text>
                   <div style={{ margin: '4px 0' }}>
@@ -223,10 +243,20 @@ const MonitorDashboard: React.FC = () => {
                   <div style={{ marginTop: 8 }}>
                     <Gauge
                       height={60}
-                      value={percent}
-                      range={{ color: ['#52c41a', '#faad14', '#ff4d4f'] }}
-                      indicator={{ pointer: { style: { stroke: '#fff' } } }}
-                      axis={{ label: { style: { fill: '#666', fontSize: 9 } } }}
+                      data={{
+                        target: value,
+                        total: cfg.max,
+                        thresholds: [cfg.good, cfg.poor],
+                      }}
+                      scale={{
+                        color: { range: ['#52c41a', '#faad14', '#ff4d4f'] },
+                      }}
+                      style={{
+                        pointerStroke: '#fff',
+                        pointerLineWidth: 2,
+                        pinFill: '#fff',
+                        pinR: 4,
+                      }}
                     />
                   </div>
                 </div>
@@ -235,13 +265,12 @@ const MonitorDashboard: React.FC = () => {
           ))}
         </Row>
 
-        <Row gutter={[12, 12]} style={{ flex: '1 1 0', minHeight: 0 }}>
+        <Row gutter={[12, 12]} style={{ flex: '0 0 auto' }}>
           <Col span={14}>
             <Card
               title={<Space><BugOutlined style={{ color: '#ff4d4f' }} /><Text style={{ color: '#e0e0e0' }}>错误监控</Text></Space>}
               style={{ ...darkCardStyle, height: '100%' }}
-              headStyle={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
-              bodyStyle={{ padding: 12, height: 'calc(100% - 56px)', overflow: 'hidden' }}
+              styles={{ body: { padding: 12, overflow: 'hidden' }, header: { color: '#e0e0e0', borderBottom: '1px solid rgba(255,255,255,0.1)' } }}
             >
               <Row gutter={[12, 12]} style={{ marginBottom: 12 }}>
                 <Col span={12}>
@@ -272,13 +301,12 @@ const MonitorDashboard: React.FC = () => {
             <Card
               title={<Space><SafetyOutlined style={{ color: '#1677ff' }} /><Text style={{ color: '#e0e0e0' }}>安全指标</Text></Space>}
               style={{ ...darkCardStyle, height: '100%' }}
-              headStyle={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255,255,255,0.1)' }}
-              bodyStyle={{ padding: 16 }}
+              styles={{ body: { padding: 16 }, header: { color: '#e0e0e0', borderBottom: '1px solid rgba(255,255,255,0.1)' } }}
             >
               <Row gutter={[12, 12]}>
                 {securityCards.map((card) => (
                   <Col span={12} key={card.title}>
-                    <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }} bodyStyle={{ padding: '12px 16px' }}>
+                    <Card style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.06)' }} styles={{ body: { padding: '12px 16px' } }}>
                       <Statistic
                         title={<Text style={{ color: '#999', fontSize: 12 }}>{card.title}</Text>}
                         value={card.value}
@@ -296,8 +324,7 @@ const MonitorDashboard: React.FC = () => {
         <Card
           title={<Space><ThunderboltOutlined style={{ color: '#1677ff' }} /><Text style={{ color: '#e0e0e0' }}>性能指标详情</Text></Space>}
           style={{ ...darkCardStyle, flex: '0 0 auto' }}
-          headStyle={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255,255,255,0.1)', minHeight: 40, padding: '0 16px' }}
-          bodyStyle={{ padding: '0 16px 8px' }}
+          styles={{ body: { padding: '0 16px 8px' }, header: { color: '#e0e0e0', borderBottom: '1px solid rgba(255,255,255,0.1)', minHeight: 40, padding: '0 16px' } }}
         >
           <Table
             dataSource={tableData}
@@ -312,8 +339,7 @@ const MonitorDashboard: React.FC = () => {
         <Card
           title={<Space><AlertOutlined style={{ color: '#fa541c' }} /><Text style={{ color: '#e0e0e0' }}>实时告警</Text></Space>}
           style={{ ...darkCardStyle, flex: '0 0 auto' }}
-          headStyle={{ color: '#e0e0e0', borderBottom: '1px solid rgba(255,255,255,0.1)', minHeight: 36, padding: '0 16px' }}
-          bodyStyle={{ padding: '8px 16px' }}
+          styles={{ body: { padding: '8px 16px' }, header: { color: '#e0e0e0', borderBottom: '1px solid rgba(255,255,255,0.1)', minHeight: 36, padding: '0 16px' } }}
         >
           <div
             ref={alertsContainerRef}

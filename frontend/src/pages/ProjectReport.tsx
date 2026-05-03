@@ -95,12 +95,12 @@ const ProjectReport: React.FC = () => {
     colorField: 'type',
     radius: 0.8,
     label: {
-      type: 'outer',
+      position: 'outside' as const,
       content: (data: any) => `${data.type}\n${((data.value / chartData.reduce((sum: number, d: any) => sum + d.value, 0)) * 100).toFixed(1)}%`,
     },
     legend: { position: 'bottom' as const },
     color: chartData.map((d: any) => getColor(d.type)),
-    interactions: [{ type: 'element-active' }],
+    interaction: { elementHighlight: true },
   })
 
   const columnConfig = (chartData: any[]) => ({
@@ -109,7 +109,7 @@ const ProjectReport: React.FC = () => {
     yField: 'value',
     label: { position: 'top' as const },
     color: chartData.map((d: any) => getColor(d.type)),
-    xAxis: { label: { autoRotate: true } },
+    axis: { x: { label: { autoRotate: true } } },
     meta: { value: { alias: '数量' } },
   })
 
@@ -123,9 +123,9 @@ const ProjectReport: React.FC = () => {
     ),
     xField: 'date',
     yField: 'value',
-    seriesField: 'type',
+    colorField: 'type',
     smooth: true,
-    point: { size: 3 },
+    style: { pointSize: 3 },
     legend: { position: 'top' as const },
     color: ['#f472b6', '#34d399', '#60a5fa'],
   })

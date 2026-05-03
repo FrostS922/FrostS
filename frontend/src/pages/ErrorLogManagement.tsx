@@ -423,11 +423,10 @@ const ErrorLogManagement: React.FC = () => {
     xField: 'date',
     yField: 'count',
     smooth: true,
-    point: { size: 3 },
+    style: { pointSize: 3 },
     color: '#ff4d4f',
-    yAxis: { min: 0 },
+    axis: { y: { min: 0 } },
     tooltip: { title: 'date' },
-    style: { height: 200 },
   }
 
   const perfChartData = perfTrendData
@@ -446,10 +445,9 @@ const ErrorLogManagement: React.FC = () => {
     yField: 'value',
     colorField: 'metric',
     smooth: true,
-    point: { size: 3 },
-    yAxis: { min: 0 },
+    style: { pointSize: 3 },
+    axis: { y: { min: 0 } },
     tooltip: { title: 'date' },
-    style: { height: 200 },
     color: ['#1677ff', '#52c41a', '#faad14', '#722ed1', '#13c2c2', '#2f54eb'],
   }
 
@@ -713,7 +711,7 @@ const ErrorLogManagement: React.FC = () => {
                 )}
 
                 {newErrorCount > 0 && (
-                  <Card style={{ marginBottom: 16, background: '#fff2f0', borderColor: '#ffccc7' }} bodyStyle={{ padding: '8px 16px' }}>
+                  <Card style={{ marginBottom: 16, background: '#fff2f0', borderColor: '#ffccc7' }} styles={{ body: { padding: '8px 16px' } }}>
                     <Space>
                       <Badge count={newErrorCount} overflowCount={99} />
                       <Text type="danger">有 {newErrorCount} 条新错误上报</Text>

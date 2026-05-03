@@ -108,9 +108,8 @@ const Dashboard: React.FC = () => {
     yField: 'value',
     colorField: 'type',
     smooth: true,
-    point: { shapeField: 'circle', sizeField: 3 },
     interaction: { tooltip: { marker: true } },
-    style: { lineWidth: 2 },
+    style: { lineWidth: 2, pointShape: 'circle', pointSize: 3 },
     color: ['#52c41a', '#ff4d4f'],
     axis: {
       x: { title: '日期' },
@@ -212,7 +211,7 @@ const Dashboard: React.FC = () => {
                   <Card
                     title="最近错误"
                     size="small"
-                    bodyStyle={{ padding: '0 12px 12px' }}
+                    styles={{ body: { padding: '0 12px 12px' } }}
                   >
                     <List
                       size="small"
@@ -273,7 +272,7 @@ const Dashboard: React.FC = () => {
                   </Card>
                 </Col>
                 <Col xs={24} sm={24} lg={12}>
-                  <Card title="核心指标 (近7天均值)" size="small" bodyStyle={{ padding: '0 12px 12px' }}>
+                  <Card title="核心指标 (近7天均值)" size="small" styles={{ body: { padding: '0 12px 12px' } }}>
                     <List
                       size="small"
                       dataSource={perfOverview.metrics}

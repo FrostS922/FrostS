@@ -718,9 +718,9 @@ const TestPlanList: React.FC = () => {
         onCancel={() => setDetailModalVisible(false)}
         width="100vw"
         style={{ top: 0, paddingBottom: 0, maxWidth: '100vw' }}
-        bodyStyle={{ height: 'calc(100vh - 110px)', overflow: 'auto', padding: '0 24px 24px' }}
+        styles={{ body: { height: 'calc(100vh - 110px)', overflow: 'auto', padding: '0 24px 24px' } }}
         footer={null}
-        destroyOnClose
+        destroyOnHidden
       >
         <Tabs activeKey={activeTab} onChange={setActiveTab} style={{ marginTop: 8 }}>
           <Tabs.TabPane tab="基本信息" key="basic">
@@ -889,7 +889,7 @@ const TestPlanList: React.FC = () => {
         onOk={handleAddCases}
         onCancel={() => setAddCasesModalVisible(false)}
         width={800}
-        destroyOnClose
+        destroyOnHidden
       >
         <div style={{ marginBottom: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
           <Input
@@ -975,7 +975,7 @@ const TestPlanList: React.FC = () => {
         onOk={handleExecute}
         onCancel={() => setExecuteModalVisible(false)}
         width={560}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={executeForm} layout="vertical" style={{ marginTop: 16 }}>
           <Form.Item name="status" label="执行状态" rules={[{ required: true, message: '请选择执行状态' }]}>
@@ -1002,7 +1002,7 @@ const TestPlanList: React.FC = () => {
         onOk={handleBatchAssign}
         onCancel={() => setAssignModalVisible(false)}
         width={400}
-        destroyOnClose
+        destroyOnHidden
       >
         <Form form={assignForm} layout="vertical" style={{ marginTop: 16 }}>
           <Form.Item name="assignedTo" label="执行人" rules={[{ required: true, message: '请输入执行人' }]}>
