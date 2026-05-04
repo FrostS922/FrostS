@@ -1,9 +1,13 @@
 package com.frosts.testplatform.controller;
 
 import com.frosts.testplatform.common.ApiResponse;
+import com.frosts.testplatform.dto.auditlog.AuditLogResponse;
 import com.frosts.testplatform.entity.AuditLog;
-import com.frosts.testplatform.repository.AuditLogRepository;
+import com.frosts.testplatform.service.AuditLogService;
 import com.frosts.testplatform.util.ExportUtils;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -29,38 +33,32 @@ import java.util.List;
 @RequestMapping("/audit-logs")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@Tag(name = "审计日志", description = "操作审计日志查询与导出")
 public class AuditLogController {
 
-    private final AuditLogRepository auditLogRepository;
+    private final AuditLogService auditLogService;
 
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @GetMapping
-    public ResponseEntity<ApiResponse<Page<AuditLog>>> getAuditLogs(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
-            @RequestParam(required = false) String action,
-            @RequestParam(required = false) String operator) {
+    @Operation(summary = "分页查询审计日志")
+    public ResponseEntity<ApiResponse<Page<AuditLogResponse>>> getAuditLogs(
+            @RequestParam(defaultValue = "0") @Parameter(description = "页码") int page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页数量") int size,
+            @RequestParam(required = false) @Parameter(description = "操作类型") String action,
+            @RequestParam(required = false) @Parameter(description = "操作人") String operator) {
         Sort sort = Sort.by(Sort.Direction.DESC, "operatedAt");
         Pageable pageable = PageRequest.of(page, size, sort);
-
-        Page<AuditLog> result;
-        if (operator != null && !operator.isBlank()) {
-            result = auditLogRepository.findByOperatorOrderByOperatedAtDesc(operator, pageable);
-        } else if (action != null && !action.isBlank()) {
-            result = auditLogRepository.findByActionOrderByOperatedAtDesc(action, pageable);
-        } else {
-            result = auditLogRepository.findAllByOrderByOperatedAtDesc(pageable);
-        }
-
+        Page<AuditLogResponse> result = auditLogService.getAuditLogs(action, operator, pageable);
         return ResponseEntity.ok(ApiResponse.success(result));
     }
 
     @GetMapping("/export/excel")
+    @Operation(summary = "导出审计日志Excel")
     public void exportExcel(
             HttpServletResponse response,
-            @RequestParam(required = false) String action,
-            @RequestParam(required = false) String operator) throws IOException {
+            @RequestParam(required = false) @Parameter(description = "操作类型") String action,
+            @RequestParam(required = false) @Parameter(description = "操作人") String operator) throws IOException {
         List<AuditLog> logs = findFilteredLogs(action, operator);
 
         String filename = URLEncoder.encode("审计日志_" + java.time.LocalDate.now() + ".xlsx", StandardCharsets.UTF_8);
@@ -85,10 +83,11 @@ public class AuditLogController {
     }
 
     @GetMapping("/export/csv")
+    @Operation(summary = "导出审计日志CSV")
     public void exportCsv(
             HttpServletResponse response,
-            @RequestParam(required = false) String action,
-            @RequestParam(required = false) String operator) throws IOException {
+            @RequestParam(required = false) @Parameter(description = "操作类型") String action,
+            @RequestParam(required = false) @Parameter(description = "操作人") String operator) throws IOException {
         List<AuditLog> logs = findFilteredLogs(action, operator);
 
         String filename = URLEncoder.encode("审计日志_" + java.time.LocalDate.now() + ".csv", StandardCharsets.UTF_8);
@@ -115,14 +114,6 @@ public class AuditLogController {
     private List<AuditLog> findFilteredLogs(String action, String operator) {
         Sort sort = Sort.by(Sort.Direction.DESC, "operatedAt");
         Pageable allPage = PageRequest.of(0, 10000, sort);
-
-        if (operator != null && !operator.isBlank()) {
-            return auditLogRepository.findByOperatorOrderByOperatedAtDesc(operator, allPage).getContent();
-        } else if (action != null && !action.isBlank()) {
-            return auditLogRepository.findByActionOrderByOperatedAtDesc(action, allPage).getContent();
-        } else {
-            return auditLogRepository.findAllByOrderByOperatedAtDesc(allPage).getContent();
-        }
+        return auditLogService.getAuditLogsForExport(action, operator, allPage);
     }
-
 }

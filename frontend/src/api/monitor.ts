@@ -27,7 +27,8 @@ export interface RealtimeSummary {
   security: {
     todayLoginSuccesses: number
     todayLoginFailures: number
-    anomalousIps: number
+    todayAnomalousIps: number
+    lockedAccounts: number
     bannedIps: number
   }
 }

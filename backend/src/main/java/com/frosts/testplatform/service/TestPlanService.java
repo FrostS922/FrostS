@@ -9,11 +9,16 @@ import com.frosts.testplatform.dto.testplan.BatchRemoveTestCasesRequest;
 import com.frosts.testplatform.dto.testplan.ExecuteTestCaseRequest;
 import com.frosts.testplatform.dto.testplan.TestCaseSummary;
 import com.frosts.testplatform.dto.testplan.TestPlanCaseResponse;
+import com.frosts.testplatform.dto.testplan.TestPlanResponse;
+import com.frosts.testplatform.dto.testplan.TestPlanRequest;
+import com.frosts.testplatform.entity.Project;
 import com.frosts.testplatform.entity.TestCase;
 import com.frosts.testplatform.entity.TestCaseModule;
 import com.frosts.testplatform.entity.TestPlan;
 import com.frosts.testplatform.entity.TestPlanCase;
 import com.frosts.testplatform.event.NotificationEvent;
+import com.frosts.testplatform.mapper.TestPlanMapper;
+import com.frosts.testplatform.repository.ProjectRepository;
 import com.frosts.testplatform.repository.TestCaseRepository;
 import com.frosts.testplatform.repository.TestPlanCaseRepository;
 import com.frosts.testplatform.repository.TestPlanRepository;
@@ -39,6 +44,8 @@ public class TestPlanService {
     private final TestPlanRepository testPlanRepository;
     private final TestPlanCaseRepository testPlanCaseRepository;
     private final TestCaseRepository testCaseRepository;
+    private final ProjectRepository projectRepository;
+    private final TestPlanMapper testPlanMapper;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -57,46 +64,64 @@ public class TestPlanService {
         return cases.stream().map(this::toTestPlanCaseResponse).toList();
     }
 
-    public TestPlan createTestPlan(TestPlan testPlan) {
-        String planNumber = generatePlanNumber(testPlan.getProject().getId());
+    public TestPlanResponse createTestPlan(TestPlanRequest request) {
+        TestPlan testPlan = new TestPlan();
+        testPlan.setName(request.getName());
+        testPlan.setDescription(request.getDescription());
+        testPlan.setStartDate(request.getStartDate());
+        testPlan.setEndDate(request.getEndDate());
+        testPlan.setActualStartDate(request.getActualStartDate());
+        testPlan.setActualEndDate(request.getActualEndDate());
+        testPlan.setStatus(request.getStatus());
+        testPlan.setOwner(request.getOwner());
+        testPlan.setEnvironment(request.getEnvironment());
+        testPlan.setMilestone(request.getMilestone());
+        testPlan.setProgress(request.getProgress());
+        testPlan.setRisk(request.getRisk());
+        testPlan.setEntryCriteria(request.getEntryCriteria());
+        testPlan.setExitCriteria(request.getExitCriteria());
+        testPlan.setTestStrategy(request.getTestStrategy());
+        testPlan.setScope(request.getScope());
+
+        Project project = projectRepository.findById(request.getProjectId())
+                .orElseThrow(() -> new RuntimeException("项目不存在: " + request.getProjectId()));
+        testPlan.setProject(project);
+
+        String planNumber = generatePlanNumber(project.getId());
         testPlan.setPlanNumber(planNumber);
-        if (testPlan.getStatus() == null) {
-            testPlan.setStatus("DRAFT");
-        }
-        if (testPlan.getProgress() == null) {
-            testPlan.setProgress(new java.math.BigDecimal("0.00"));
-        }
+        if (testPlan.getStatus() == null) testPlan.setStatus("DRAFT");
+        if (testPlan.getProgress() == null) testPlan.setProgress(new java.math.BigDecimal("0.00"));
         if (testPlan.getTotalCases() == null) testPlan.setTotalCases(0);
         if (testPlan.getPassedCases() == null) testPlan.setPassedCases(0);
         if (testPlan.getFailedCases() == null) testPlan.setFailedCases(0);
         if (testPlan.getBlockedCases() == null) testPlan.setBlockedCases(0);
         if (testPlan.getNotRunCases() == null) testPlan.setNotRunCases(0);
-        return testPlanRepository.save(testPlan);
+        return testPlanMapper.toResponse(testPlanRepository.save(testPlan));
     }
 
-    public TestPlan updateTestPlan(Long id, TestPlan testPlanDetails) {
+    public TestPlanResponse updateTestPlan(Long id, TestPlanRequest request) {
         TestPlan testPlan = testPlanRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("测试计划不存在: " + id));
 
-        testPlan.setName(testPlanDetails.getName());
-        testPlan.setDescription(testPlanDetails.getDescription());
-        testPlan.setStartDate(testPlanDetails.getStartDate());
-        testPlan.setEndDate(testPlanDetails.getEndDate());
-        testPlan.setActualStartDate(testPlanDetails.getActualStartDate());
-        testPlan.setActualEndDate(testPlanDetails.getActualEndDate());
-        testPlan.setStatus(testPlanDetails.getStatus());
-        testPlan.setOwner(testPlanDetails.getOwner());
-        testPlan.setEnvironment(testPlanDetails.getEnvironment());
-        testPlan.setMilestone(testPlanDetails.getMilestone());
-        testPlan.setProgress(testPlanDetails.getProgress());
-        testPlan.setRisk(testPlanDetails.getRisk());
-        testPlan.setEntryCriteria(testPlanDetails.getEntryCriteria());
-        testPlan.setExitCriteria(testPlanDetails.getExitCriteria());
-        testPlan.setTestStrategy(testPlanDetails.getTestStrategy());
-        testPlan.setScope(testPlanDetails.getScope());
+        testPlan.setName(request.getName());
+        testPlan.setDescription(request.getDescription());
+        testPlan.setStartDate(request.getStartDate());
+        testPlan.setEndDate(request.getEndDate());
+        testPlan.setActualStartDate(request.getActualStartDate());
+        testPlan.setActualEndDate(request.getActualEndDate());
+        testPlan.setStatus(request.getStatus());
+        testPlan.setOwner(request.getOwner());
+        testPlan.setEnvironment(request.getEnvironment());
+        testPlan.setMilestone(request.getMilestone());
+        testPlan.setProgress(request.getProgress());
+        testPlan.setRisk(request.getRisk());
+        testPlan.setEntryCriteria(request.getEntryCriteria());
+        testPlan.setExitCriteria(request.getExitCriteria());
+        testPlan.setTestStrategy(request.getTestStrategy());
+        testPlan.setScope(request.getScope());
 
         String oldStatus = testPlan.getStatus();
-        String newStatus = testPlanDetails.getStatus();
+        String newStatus = request.getStatus();
 
         if (newStatus != null && !newStatus.equals(oldStatus)) {
             eventPublisher.publishEvent(NotificationEvent.builder()
@@ -111,7 +136,7 @@ public class TestPlanService {
                     .build());
         }
 
-        return testPlanRepository.save(testPlan);
+        return testPlanMapper.toResponse(testPlanRepository.save(testPlan));
     }
 
     public void deleteTestPlan(Long id) {
@@ -316,5 +341,16 @@ public class TestPlanService {
                 .createdBy(tpc.getCreatedBy())
                 .updatedBy(tpc.getUpdatedBy())
                 .build();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<TestPlanResponse> getTestPlanResponsesByProject(Long projectId, Pageable pageable) {
+        return testPlanRepository.findByProjectId(projectId, pageable).map(testPlanMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public TestPlanResponse getTestPlanResponseById(Long id) {
+        TestPlan tp = getTestPlanById(id);
+        return testPlanMapper.toResponse(tp);
     }
 }

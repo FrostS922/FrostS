@@ -1,6 +1,7 @@
 package com.frosts.testplatform.entity;
 
 import com.frosts.testplatform.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -25,10 +26,12 @@ public class Requirement extends BaseEntity {
     @Column(length = 50, unique = true)
     private String requirementNumber;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "parent_id")
     private Requirement parent;

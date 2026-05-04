@@ -2,6 +2,9 @@ package com.frosts.testplatform.controller;
 
 import com.frosts.testplatform.common.ApiResponse;
 import com.frosts.testplatform.service.FileStorageService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -23,20 +26,23 @@ import java.util.Map;
 @RestController
 @RequestMapping("/files")
 @RequiredArgsConstructor
+@Tag(name = "文件管理", description = "文件上传与访问")
 public class FileController {
 
     private final FileStorageService fileStorageService;
 
     @PostMapping("/avatars")
+    @Operation(summary = "上传头像")
     public ResponseEntity<ApiResponse<Map<String, String>>> uploadAvatar(
-            @RequestParam("file") MultipartFile file,
+            @RequestParam("file") @Parameter(description = "头像文件") MultipartFile file,
             Authentication authentication) {
         String avatarUrl = fileStorageService.storeAvatar(file);
         return ResponseEntity.ok(ApiResponse.success(Map.of("url", avatarUrl)));
     }
 
     @GetMapping("/avatars/{filename}")
-    public ResponseEntity<Resource> getAvatar(@PathVariable String filename) {
+    @Operation(summary = "获取头像文件")
+    public ResponseEntity<Resource> getAvatar(@PathVariable @Parameter(description = "文件名") String filename) {
         Path filePath = fileStorageService.getAvatarPath(filename);
         if (filePath == null) {
             return ResponseEntity.notFound().build();

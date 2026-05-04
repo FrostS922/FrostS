@@ -1,8 +1,13 @@
 package com.frosts.testplatform.service;
 
 import com.frosts.testplatform.dto.RequirementCoverageDTO;
+import com.frosts.testplatform.dto.requirement.RequirementRequest;
+import com.frosts.testplatform.dto.requirement.RequirementResponse;
+import com.frosts.testplatform.entity.Project;
 import com.frosts.testplatform.entity.Requirement;
 import com.frosts.testplatform.entity.TestCase;
+import com.frosts.testplatform.mapper.RequirementMapper;
+import com.frosts.testplatform.repository.ProjectRepository;
 import com.frosts.testplatform.repository.RequirementRepository;
 import com.frosts.testplatform.repository.TestCaseRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +27,8 @@ public class RequirementService {
 
     private final RequirementRepository requirementRepository;
     private final TestCaseRepository testCaseRepository;
+    private final ProjectRepository projectRepository;
+    private final RequirementMapper requirementMapper;
 
     @Transactional(readOnly = true)
     public Page<Requirement> getRequirementsByProject(Long projectId, Pageable pageable) {
@@ -44,47 +51,75 @@ public class RequirementService {
         return requirementRepository.findByProjectIdAndParentIdIsNull(projectId);
     }
 
-    public Requirement createRequirement(Requirement requirement) {
-        String reqNumber = generateRequirementNumber(requirement.getProject().getId());
-        requirement.setRequirementNumber(reqNumber);
-        if (requirement.getStatus() == null) {
-            requirement.setStatus("DRAFT");
-        }
-        return requirementRepository.save(requirement);
-    }
-
-    public Requirement updateRequirement(Long id, Requirement requirementDetails) {
-        Requirement requirement = requirementRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("需求不存在: " + id));
-
-        if (requirementDetails.getTitle() != null) requirement.setTitle(requirementDetails.getTitle());
-        if (requirementDetails.getDescription() != null) requirement.setDescription(requirementDetails.getDescription());
-        if (requirementDetails.getAcceptanceCriteria() != null) requirement.setAcceptanceCriteria(requirementDetails.getAcceptanceCriteria());
-        if (requirementDetails.getType() != null) requirement.setType(requirementDetails.getType());
-        if (requirementDetails.getPriority() != null) requirement.setPriority(requirementDetails.getPriority());
-        if (requirementDetails.getStatus() != null) {
+    public RequirementResponse createRequirement(RequirementRequest request) {
+        Requirement requirement = new Requirement();
+        requirement.setTitle(request.getTitle());
+        requirement.setDescription(request.getDescription());
+        requirement.setAcceptanceCriteria(request.getAcceptanceCriteria());
+        requirement.setType(request.getType());
+        requirement.setPriority(request.getPriority());
+        requirement.setStatus(request.getStatus());
+        if (request.getStatus() != null) {
             String oldStatus = requirement.getStatus();
-            String newStatus = requirementDetails.getStatus();
-            requirement.setStatus(newStatus);
+            String newStatus = request.getStatus();
             if ("APPROVED".equals(newStatus) && !"APPROVED".equals(oldStatus)) {
-                // Optionally trigger approval workflow
             }
             if ("REJECTED".equals(newStatus)) {
-                requirement.setRejectedReason(requirementDetails.getRejectedReason());
+                requirement.setRejectedReason(request.getRejectedReason());
             }
             if ("COMPLETED".equals(newStatus) && !"COMPLETED".equals(oldStatus)) {
                 requirement.setCompletedDate(java.time.LocalDate.now());
             }
         }
-        if (requirementDetails.getParent() != null) requirement.setParent(requirementDetails.getParent());
-        if (requirementDetails.getAssignedTo() != null) requirement.setAssignedTo(requirementDetails.getAssignedTo());
-        if (requirementDetails.getStoryPoints() != null) requirement.setStoryPoints(requirementDetails.getStoryPoints());
-        if (requirementDetails.getEstimatedHours() != null) requirement.setEstimatedHours(requirementDetails.getEstimatedHours());
-        if (requirementDetails.getActualHours() != null) requirement.setActualHours(requirementDetails.getActualHours());
-        if (requirementDetails.getDueDate() != null) requirement.setDueDate(requirementDetails.getDueDate());
-        if (requirementDetails.getSource() != null) requirement.setSource(requirementDetails.getSource());
+        requirement.setAssignedTo(request.getAssignedTo());
+        requirement.setStoryPoints(request.getStoryPoints());
+        requirement.setEstimatedHours(request.getEstimatedHours());
+        requirement.setActualHours(request.getActualHours());
+        requirement.setDueDate(request.getDueDate());
+        requirement.setSource(request.getSource());
+        requirement.setRejectedReason(request.getRejectedReason());
 
-        return requirementRepository.save(requirement);
+        Project project = projectRepository.findById(request.getProjectId())
+                .orElseThrow(() -> new RuntimeException("项目不存在: " + request.getProjectId()));
+        requirement.setProject(project);
+
+        if (request.getParentId() != null) {
+            Requirement parent = requirementRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new RuntimeException("父需求不存在: " + request.getParentId()));
+            requirement.setParent(parent);
+        }
+
+        String reqNumber = generateRequirementNumber(project.getId());
+        requirement.setRequirementNumber(reqNumber);
+        if (requirement.getStatus() == null) requirement.setStatus("DRAFT");
+        return requirementMapper.toResponse(requirementRepository.save(requirement));
+    }
+
+    public RequirementResponse updateRequirement(Long id, RequirementRequest request) {
+        Requirement requirement = getRequirementById(id);
+        requirement.setTitle(request.getTitle());
+        requirement.setDescription(request.getDescription());
+        requirement.setAcceptanceCriteria(request.getAcceptanceCriteria());
+        requirement.setType(request.getType());
+        requirement.setPriority(request.getPriority());
+        requirement.setStatus(request.getStatus());
+        requirement.setAssignedTo(request.getAssignedTo());
+        requirement.setStoryPoints(request.getStoryPoints());
+        requirement.setEstimatedHours(request.getEstimatedHours());
+        requirement.setActualHours(request.getActualHours());
+        requirement.setDueDate(request.getDueDate());
+        requirement.setSource(request.getSource());
+        requirement.setRejectedReason(request.getRejectedReason());
+
+        if (request.getParentId() != null) {
+            Requirement parent = requirementRepository.findById(request.getParentId())
+                    .orElseThrow(() -> new RuntimeException("父需求不存在: " + request.getParentId()));
+            requirement.setParent(parent);
+        } else {
+            requirement.setParent(null);
+        }
+
+        return requirementMapper.toResponse(requirementRepository.save(requirement));
     }
 
     public void deleteRequirement(Long id) {
@@ -140,5 +175,28 @@ public class RequirementService {
         dto.setTestCases(summaries);
 
         return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public Page<RequirementResponse> getRequirementResponsesByProject(Long projectId, Pageable pageable) {
+        Page<Requirement> page = requirementRepository.findByProjectId(projectId, pageable);
+        page.getContent().forEach(req -> {
+            long count = testCaseRepository.countByRequirementId(req.getId());
+            req.setTestCaseCount(count);
+            req.setCoverageRate(count > 0 ? 100.0 : 0.0);
+        });
+        return page.map(requirementMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public RequirementResponse getRequirementResponseById(Long id) {
+        Requirement req = getRequirementById(id);
+        return requirementMapper.toResponse(req);
+    }
+
+    @Transactional(readOnly = true)
+    public List<RequirementResponse> getRootRequirementResponses(Long projectId) {
+        return requirementRepository.findByProjectIdAndParentIdIsNull(projectId)
+                .stream().map(requirementMapper::toResponse).toList();
     }
 }

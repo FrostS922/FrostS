@@ -1,6 +1,7 @@
 package com.frosts.testplatform.entity;
 
 import com.frosts.testplatform.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -11,10 +12,12 @@ import lombok.EqualsAndHashCode;
 @Table(name = "test_plan_case")
 public class TestPlanCase extends BaseEntity {
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_plan_id")
     private TestPlan testPlan;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_case_id")
     private TestCase testCase;

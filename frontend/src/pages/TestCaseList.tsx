@@ -582,7 +582,7 @@ const TestCaseList: React.FC = () => {
                 <Descriptions.Item label="预估执行时间">
                   {viewingCase.executionTime ? `${viewingCase.executionTime} 分钟` : '—'}
                 </Descriptions.Item>
-                <Descriptions.Item label="评审人">
+                <Descriptions.Item label="评审人" span={2}>
                   {viewingCase.reviewer || <span className="tc-detail-empty">未指定</span>}
                 </Descriptions.Item>
                 <Descriptions.Item label="标签" span={2}>

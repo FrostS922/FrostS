@@ -1,6 +1,7 @@
 package com.frosts.testplatform.entity;
 
 import com.frosts.testplatform.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -20,14 +21,17 @@ public class Defect extends BaseEntity {
     @Column(unique = true, length = 50)
     private String defectNumber;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_case_id")
     private TestCase testCase;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_plan_case_id")
     private TestPlanCase testPlanCase;
@@ -110,6 +114,7 @@ public class Defect extends BaseEntity {
     @Column(length = 50)
     private String source;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "defect", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<DefectAttachment> attachments;
 

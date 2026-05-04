@@ -1,7 +1,10 @@
 package com.frosts.testplatform.service;
 
+import com.frosts.testplatform.dto.project.ProjectRequest;
+import com.frosts.testplatform.dto.project.ProjectResponse;
 import com.frosts.testplatform.entity.Project;
 import com.frosts.testplatform.entity.User;
+import com.frosts.testplatform.mapper.ProjectMapper;
 import com.frosts.testplatform.repository.ProjectRepository;
 import com.frosts.testplatform.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +21,7 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final ProjectMapper projectMapper;
 
     @Transactional(readOnly = true)
     public Page<Project> getAllProjects(String search, Pageable pageable) {
@@ -37,37 +41,44 @@ public class ProjectService {
         return projectRepository.findByIsDeletedFalse();
     }
 
-    public Project createProject(Project project) {
-        if (project.getCode() != null && projectRepository.existsByCodeAndIsDeletedFalse(project.getCode())) {
-            throw new RuntimeException("项目编码已存在: " + project.getCode());
+    public ProjectResponse createProject(ProjectRequest request) {
+        if (request.getCode() != null && projectRepository.existsByCodeAndIsDeletedFalse(request.getCode())) {
+            throw new RuntimeException("项目编码已存在: " + request.getCode());
         }
-        if (project.getProgress() == null) {
-            project.setProgress(new java.math.BigDecimal("0.00"));
-        }
-        if (project.getHealth() == null) {
-            project.setHealth("NORMAL");
-        }
-        return projectRepository.save(project);
+        Project project = new Project();
+        project.setName(request.getName());
+        project.setCode(request.getCode());
+        project.setDescription(request.getDescription());
+        project.setManager(request.getManager());
+        project.setStartDate(request.getStartDate());
+        project.setEndDate(request.getEndDate());
+        project.setActualEndDate(request.getActualEndDate());
+        project.setStatus(request.getStatus());
+        project.setCategory(request.getCategory());
+        project.setProgress(request.getProgress() != null ? request.getProgress() : new java.math.BigDecimal("0.00"));
+        project.setEstimatedHours(request.getEstimatedHours());
+        project.setActualHours(request.getActualHours());
+        project.setHealth(request.getHealth() != null ? request.getHealth() : "NORMAL");
+        if (project.getStatus() == null) project.setStatus("ACTIVE");
+        return projectMapper.toResponse(projectRepository.save(project));
     }
 
-    public Project updateProject(Long id, Project projectDetails) {
-        Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("项目不存在: " + id));
-
-        project.setName(projectDetails.getName());
-        project.setDescription(projectDetails.getDescription());
-        project.setManager(projectDetails.getManager());
-        project.setStartDate(projectDetails.getStartDate());
-        project.setEndDate(projectDetails.getEndDate());
-        project.setActualEndDate(projectDetails.getActualEndDate());
-        project.setStatus(projectDetails.getStatus());
-        project.setCategory(projectDetails.getCategory());
-        project.setProgress(projectDetails.getProgress());
-        project.setEstimatedHours(projectDetails.getEstimatedHours());
-        project.setActualHours(projectDetails.getActualHours());
-        project.setHealth(projectDetails.getHealth());
-
-        return projectRepository.save(project);
+    public ProjectResponse updateProject(Long id, ProjectRequest request) {
+        Project project = getProjectById(id);
+        project.setName(request.getName());
+        project.setCode(request.getCode());
+        project.setDescription(request.getDescription());
+        project.setManager(request.getManager());
+        project.setStartDate(request.getStartDate());
+        project.setEndDate(request.getEndDate());
+        project.setActualEndDate(request.getActualEndDate());
+        project.setStatus(request.getStatus());
+        project.setCategory(request.getCategory());
+        project.setProgress(request.getProgress());
+        project.setEstimatedHours(request.getEstimatedHours());
+        project.setActualHours(request.getActualHours());
+        project.setHealth(request.getHealth());
+        return projectMapper.toResponse(projectRepository.save(project));
     }
 
     public void deleteProject(Long id) {
@@ -89,5 +100,27 @@ public class ProjectService {
         Project project = projectRepository.findByIdWithMembers(projectId);
         project.getMembers().removeIf(u -> u.getUsername().equals(username));
         return projectRepository.save(project);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProjectResponse> getProjectResponses(String search, Pageable pageable) {
+        Page<Project> page;
+        if (search != null && !search.isEmpty()) {
+            page = projectRepository.findByNameContainingOrCodeContainingAndIsDeletedFalse(search, search, pageable);
+        } else {
+            page = projectRepository.findByIsDeletedFalse(pageable);
+        }
+        return page.map(projectMapper::toResponse);
+    }
+
+    @Transactional(readOnly = true)
+    public ProjectResponse getProjectResponseById(Long id) {
+        Project p = getProjectById(id);
+        return projectMapper.toResponse(p);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProjectResponse> getAllProjectResponsesList() {
+        return projectRepository.findByIsDeletedFalse().stream().map(projectMapper::toResponse).toList();
     }
 }

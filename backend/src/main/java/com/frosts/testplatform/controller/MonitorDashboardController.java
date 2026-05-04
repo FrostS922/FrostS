@@ -2,131 +2,39 @@ package com.frosts.testplatform.controller;
 
 import com.frosts.testplatform.common.ApiResponse;
 import com.frosts.testplatform.dto.monitor.RealtimeSummaryResponse;
-import com.frosts.testplatform.entity.ErrorLog;
-import com.frosts.testplatform.entity.LoginHistory;
 import com.frosts.testplatform.entity.Notification;
-import com.frosts.testplatform.repository.ErrorLogRepository;
-import com.frosts.testplatform.repository.LoginHistoryRepository;
-import com.frosts.testplatform.repository.NotificationRepository;
-import com.frosts.testplatform.repository.PerformanceLogRepository;
-import com.frosts.testplatform.repository.UserRepository;
-import com.frosts.testplatform.service.LoginAnomalyAlertService;
+import com.frosts.testplatform.service.MonitorDashboardService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @RestController
 @RequestMapping("/monitor")
 @RequiredArgsConstructor
 @PreAuthorize("hasRole('ADMIN')")
+@Tag(name = "监控仪表盘", description = "系统实时监控数据概览与告警")
 public class MonitorDashboardController {
 
-    private final PerformanceLogRepository performanceLogRepository;
-    private final ErrorLogRepository errorLogRepository;
-    private final LoginHistoryRepository loginHistoryRepository;
-    private final LoginAnomalyAlertService loginAnomalyAlertService;
-    private final UserRepository userRepository;
-    private final NotificationRepository notificationRepository;
+    private final MonitorDashboardService monitorDashboardService;
 
     @GetMapping("/realtime-summary")
+    @Operation(summary = "获取实时监控概览", description = "返回性能、错误、安全三个维度的实时汇总数据")
     public ResponseEntity<ApiResponse<RealtimeSummaryResponse>> getRealtimeSummary() {
-        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
-
-        RealtimeSummaryResponse.PerformanceSnapshot performance = buildPerformanceSnapshot(todayStart);
-        RealtimeSummaryResponse.ErrorSnapshot errors = buildErrorSnapshot(todayStart);
-        RealtimeSummaryResponse.SecuritySnapshot security = buildSecuritySnapshot(todayStart);
-
-        RealtimeSummaryResponse response = RealtimeSummaryResponse.builder()
-                .performance(performance)
-                .errors(errors)
-                .security(security)
-                .build();
-
+        RealtimeSummaryResponse response = monitorDashboardService.getRealtimeSummary();
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @GetMapping("/alerts/recent")
+    @Operation(summary = "获取最近告警", description = "返回最近10条性能监控、错误、安全类告警通知")
     public ResponseEntity<ApiResponse<List<Notification>>> getRecentAlerts() {
-        List<Notification> alerts = notificationRepository.findRecentAlertsByCategories(
-                List.of("PERF_MONITOR", "ERROR", "SECURITY"), PageRequest.of(0, 10));
+        List<Notification> alerts = monitorDashboardService.getRecentAlerts();
         return ResponseEntity.ok(ApiResponse.success(alerts));
-    }
-
-    private RealtimeSummaryResponse.PerformanceSnapshot buildPerformanceSnapshot(LocalDateTime todayStart) {
-        long totalReports = performanceLogRepository.countByIsDeletedFalse();
-        long todayReports = performanceLogRepository.countByCreatedAtAfterAndIsDeletedFalse(todayStart);
-
-        LocalDateTime since = LocalDateTime.now().minusDays(7);
-        List<Object[]> stats = performanceLogRepository.getMetricStats(since);
-
-        List<RealtimeSummaryResponse.MetricSnapshot> metrics = stats.stream()
-                .map(row -> RealtimeSummaryResponse.MetricSnapshot.builder()
-                        .metricName((String) row[0])
-                        .avgValue(Math.round(((Number) row[1]).doubleValue() * 100.0) / 100.0)
-                        .count(((Number) row[4]).longValue())
-                        .poorCount(((Number) row[5]).longValue())
-                        .build())
-                .toList();
-
-        return RealtimeSummaryResponse.PerformanceSnapshot.builder()
-                .totalReports(totalReports)
-                .todayReports(todayReports)
-                .metrics(metrics)
-                .build();
-    }
-
-    private RealtimeSummaryResponse.ErrorSnapshot buildErrorSnapshot(LocalDateTime todayStart) {
-        long totalErrors = errorLogRepository.countByIsDeletedFalse();
-        long todayErrors = errorLogRepository.countByCreatedAtAfterAndIsDeletedFalse(todayStart);
-
-        List<ErrorLog> recentLogs = errorLogRepository.findTop5ByIsDeletedFalseOrderByCreatedAtDesc();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
-        List<RealtimeSummaryResponse.RecentError> recentErrors = recentLogs.stream()
-                .map(log -> RealtimeSummaryResponse.RecentError.builder()
-                        .errorMessage(truncate(log.getErrorMessage(), 80))
-                        .category(log.getCategory() != null ? log.getCategory() : "")
-                        .createdAt(log.getCreatedAt() != null ? log.getCreatedAt().format(fmt) : "")
-                        .build())
-                .toList();
-
-        return RealtimeSummaryResponse.ErrorSnapshot.builder()
-                .totalErrors(totalErrors)
-                .todayErrors(todayErrors)
-                .recentErrors(recentErrors)
-                .build();
-    }
-
-    private RealtimeSummaryResponse.SecuritySnapshot buildSecuritySnapshot(LocalDateTime todayStart) {
-        List<LoginHistory> todayLogins = loginHistoryRepository.findByLoginAtBetween(todayStart, LocalDateTime.now());
-        long todayLoginSuccesses = todayLogins.stream().filter(l -> l.getSuccess()).count();
-        long todayLoginFailures = todayLogins.stream().filter(l -> !l.getSuccess()).count();
-        long anomalousIps = todayLogins.stream()
-                .filter(l -> !l.getSuccess())
-                .map(LoginHistory::getLoginIp)
-                .distinct()
-                .count();
-        long bannedIps = loginAnomalyAlertService.getBannedIpCount();
-
-        return RealtimeSummaryResponse.SecuritySnapshot.builder()
-                .todayLoginSuccesses(todayLoginSuccesses)
-                .todayLoginFailures(todayLoginFailures)
-                .anomalousIps(anomalousIps)
-                .bannedIps(bannedIps)
-                .build();
-    }
-
-    private String truncate(String value, int max) {
-        if (value == null) return null;
-        return value.length() > max ? value.substring(0, max) : value;
     }
 }

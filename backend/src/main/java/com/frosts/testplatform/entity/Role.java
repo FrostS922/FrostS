@@ -1,6 +1,7 @@
 package com.frosts.testplatform.entity;
 
 import com.frosts.testplatform.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -34,7 +35,8 @@ public class Role extends BaseEntity {
     @Column(name = "is_system")
     private Boolean isSystem = false;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @JsonIgnore
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
         name = "sys_role_permission",
         joinColumns = @JoinColumn(name = "role_id"),

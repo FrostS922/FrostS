@@ -11,18 +11,18 @@ import com.frosts.testplatform.dto.MfaVerifyRequest;
 import com.frosts.testplatform.dto.ProfileResponse;
 import com.frosts.testplatform.dto.RegisterRequest;
 import com.frosts.testplatform.dto.RefreshTokenRequest;
-import com.frosts.testplatform.entity.User;
-import com.frosts.testplatform.repository.SystemSettingRepository;
-import com.frosts.testplatform.repository.UserRepository;
 import com.frosts.testplatform.service.AuthService;
 import com.frosts.testplatform.service.CaptchaService;
 import com.frosts.testplatform.service.MfaService;
+import com.frosts.testplatform.service.SystemSettingService;
+import com.frosts.testplatform.service.UserProfileService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -31,20 +31,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
+@Tag(name = "认证管理", description = "用户登录、注册、MFA等认证操作")
 public class AuthController {
 
     private final AuthService authService;
-    private final SystemSettingRepository systemSettingRepository;
+    private final SystemSettingService systemSettingService;
     private final CaptchaService captchaService;
-    private final UserRepository userRepository;
+    private final UserProfileService userProfileService;
     private final MfaService mfaService;
 
     @PostMapping("/login")
+    @Operation(summary = "用户登录")
     public ResponseEntity<JwtResponse> login(@RequestBody LoginRequest request, HttpServletRequest httpRequest) {
         String clientIp = getClientIp(httpRequest);
         String userAgent = httpRequest.getHeader("User-Agent");
@@ -53,6 +54,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
+    @Operation(summary = "用户注册")
     public ResponseEntity<JwtResponse> register(@Valid @RequestBody RegisterRequest request) {
         if (!captchaService.validateCaptcha(request.captchaKey(), request.captchaCode())) {
             throw new RuntimeException("验证码不正确或已过期");
@@ -62,6 +64,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @Operation(summary = "刷新令牌")
     public ResponseEntity<JwtResponse> refreshToken(@RequestBody RefreshTokenRequest request,
                                                      HttpServletRequest httpRequest) {
         String clientIp = getClientIp(httpRequest);
@@ -70,37 +73,15 @@ public class AuthController {
     }
 
     @GetMapping("/me")
+    @Operation(summary = "获取当前用户信息")
     public ResponseEntity<ApiResponse<ProfileResponse>> getCurrentUser(Authentication authentication) {
-        User user = userRepository.findByUsername(authentication.getName())
-                .orElseThrow(() -> new RuntimeException("用户不存在: " + authentication.getName()));
-
-        ProfileResponse profile = ProfileResponse.builder()
-                .id(user.getId())
-                .username(user.getUsername())
-                .realName(user.getRealName())
-                .email(user.getEmail())
-                .phone(user.getPhone())
-                .avatar(user.getAvatar())
-                .department(user.getDepartment())
-                .position(user.getPosition())
-                .enabled(user.getEnabled())
-                .accountNonLocked(user.getAccountNonLocked())
-                .lastLoginAt(user.getLastLoginAt())
-                .lastLoginIp(user.getLastLoginIp())
-                .loginCount(user.getLoginCount())
-                .passwordChangedAt(user.getPasswordChangedAt())
-                .roles(user.getRoles().stream()
-                        .map(role -> "ROLE_" + role.getCode())
-                        .collect(Collectors.toList()))
-                .createdAt(user.getCreatedAt())
-                .updatedAt(user.getUpdatedAt())
-                .build();
-
+        ProfileResponse profile = userProfileService.getProfile(authentication.getName());
         return ResponseEntity.ok(ApiResponse.success(profile));
     }
 
     @PostMapping("/change-password")
     @Auditable(action = "CHANGE_PASSWORD", target = "USER", description = "修改密码")
+    @Operation(summary = "修改密码")
     public ResponseEntity<ApiResponse<Void>> changePassword(
             @Valid @RequestBody ChangePasswordRequest request,
             Authentication authentication) {
@@ -109,50 +90,32 @@ public class AuthController {
     }
 
     @GetMapping("/registration-status")
+    @Operation(summary = "获取注册开关状态")
     public ResponseEntity<ApiResponse<Boolean>> getRegistrationStatus() {
-        boolean open = systemSettingRepository
-                .findBySettingKeyAndIsDeletedFalse("security.open_registration")
-                .map(setting -> "true".equalsIgnoreCase(setting.getSettingValue()))
-                .orElse(false);
-        return ResponseEntity.ok(ApiResponse.success(open));
+        return ResponseEntity.ok(ApiResponse.success(systemSettingService.isOpenRegistration()));
     }
 
     @GetMapping("/password-policy")
+    @Operation(summary = "获取密码策略")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getPasswordPolicy() {
-        int minLength = systemSettingRepository
-                .findBySettingKeyAndIsDeletedFalse("security.password_min_length")
-                .map(setting -> {
-                    try {
-                        return Integer.parseInt(setting.getSettingValue());
-                    } catch (NumberFormatException e) {
-                        return 6;
-                    }
-                })
-                .orElse(6);
-
-        String complexity = systemSettingRepository
-                .findBySettingKeyAndIsDeletedFalse("security.password_complexity")
-                .map(setting -> setting.getSettingValue() != null ? setting.getSettingValue() : "LOW")
-                .orElse("LOW");
-
-        return ResponseEntity.ok(ApiResponse.success(Map.of(
-                "minLength", minLength,
-                "complexity", complexity
-        )));
+        return ResponseEntity.ok(ApiResponse.success(systemSettingService.getPasswordPolicy()));
     }
 
     @GetMapping("/captcha")
+    @Operation(summary = "获取验证码")
     public ResponseEntity<ApiResponse<CaptchaResponse>> getCaptcha() {
         return ResponseEntity.ok(ApiResponse.success(captchaService.generateCaptcha()));
     }
 
     @PostMapping("/mfa/setup")
+    @Operation(summary = "设置MFA")
     public ResponseEntity<ApiResponse<MfaSetupResponse>> setupMfa(Authentication authentication) {
         MfaSetupResponse response = mfaService.setupMfa(authentication.getName());
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PostMapping("/mfa/verify-setup")
+    @Operation(summary = "验证MFA设置")
     public ResponseEntity<ApiResponse<Void>> verifySetup(
             Authentication authentication, @RequestBody MfaVerifyRequest request) {
         mfaService.verifySetup(authentication.getName(), request.getCode());
@@ -160,6 +123,7 @@ public class AuthController {
     }
 
     @PostMapping("/mfa/verify")
+    @Operation(summary = "MFA登录验证")
     public ResponseEntity<JwtResponse> verifyMfa(@RequestBody MfaVerifyRequest request) {
         if (!mfaService.validateMfaToken(request.getMfaToken())) {
             throw new RuntimeException("MFA令牌无效或已过期");
@@ -173,6 +137,7 @@ public class AuthController {
     }
 
     @DeleteMapping("/mfa")
+    @Operation(summary = "禁用MFA")
     public ResponseEntity<ApiResponse<Void>> disableMfa(
             Authentication authentication, @RequestBody Map<String, String> body) {
         String password = body.get("password");
@@ -181,6 +146,7 @@ public class AuthController {
     }
 
     @GetMapping("/mfa/status")
+    @Operation(summary = "获取MFA状态")
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMfaStatus(Authentication authentication) {
         boolean enabled = mfaService.isMfaEnabled(authentication.getName());
         return ResponseEntity.ok(ApiResponse.success(Map.of("enabled", enabled)));

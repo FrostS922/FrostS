@@ -1,6 +1,7 @@
 package com.frosts.testplatform.entity;
 
 import com.frosts.testplatform.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -28,6 +29,7 @@ public class Notification extends BaseEntity {
     @Column(length = 10)
     private String priority = "NORMAL";
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id")
     private User sender;

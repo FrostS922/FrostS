@@ -3,6 +3,7 @@ package com.frosts.testplatform.service;
 import com.frosts.testplatform.dto.JwtResponse;
 import com.frosts.testplatform.dto.LoginRequest;
 import com.frosts.testplatform.dto.RegisterRequest;
+import com.frosts.testplatform.entity.Permission;
 import com.frosts.testplatform.entity.RefreshToken;
 import com.frosts.testplatform.entity.Role;
 import com.frosts.testplatform.entity.SystemSetting;
@@ -23,12 +24,15 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.LockedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -169,7 +173,7 @@ public class AuthService {
         String newRefreshToken = createRefreshToken(username, clientIp, null);
 
         CustomUserDetailsService.CustomUserDetails userDetails =
-                new CustomUserDetailsService.CustomUserDetails(user);
+                buildCustomUserDetails(user);
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities());
         String newAccessToken = jwtTokenProvider.generateToken(authentication);
@@ -205,7 +209,7 @@ public class AuthService {
                 .orElseThrow(() -> new RuntimeException("用户不存在: " + username));
 
         CustomUserDetailsService.CustomUserDetails userDetails =
-                new CustomUserDetailsService.CustomUserDetails(user);
+                buildCustomUserDetails(user);
         Authentication authentication = new UsernamePasswordAuthenticationToken(
                 userDetails, null, userDetails.getAuthorities());
         String jwt = jwtTokenProvider.generateToken(authentication);
@@ -401,6 +405,17 @@ public class AuthService {
                     }
                 })
                 .orElse(defaultValue);
+    }
+
+    private CustomUserDetailsService.CustomUserDetails buildCustomUserDetails(User user) {
+        Set<GrantedAuthority> authorities = new HashSet<>();
+        for (Role role : user.getRoles()) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getCode()));
+            for (Permission permission : role.getPermissions()) {
+                authorities.add(new SimpleGrantedAuthority(permission.getCode()));
+            }
+        }
+        return new CustomUserDetailsService.CustomUserDetails(user, authorities);
     }
 
     private String getSettingAsString(String settingKey, String defaultValue) {

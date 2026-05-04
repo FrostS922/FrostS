@@ -1,6 +1,7 @@
 package com.frosts.testplatform.entity;
 
 import com.frosts.testplatform.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -54,6 +55,7 @@ public class Project extends BaseEntity {
     @Column(length = 20)
     private String health;
 
+    @JsonIgnore
     @ManyToMany
     @JoinTable(
         name = "project_member",

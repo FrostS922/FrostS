@@ -29,26 +29,29 @@ public class CustomUserDetailsService implements UserDetailsService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found: " + username));
 
-        return new CustomUserDetails(user);
+        Set<GrantedAuthority> authorities = new HashSet<>();
+        for (Role role : user.getRoles()) {
+            authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getCode()));
+            for (Permission permission : role.getPermissions()) {
+                authorities.add(new SimpleGrantedAuthority(permission.getCode()));
+            }
+        }
+
+        return new CustomUserDetails(user, authorities);
     }
 
     public static class CustomUserDetails implements UserDetails {
 
         private final User user;
+        private final Set<GrantedAuthority> authorities;
 
-        public CustomUserDetails(User user) {
+        public CustomUserDetails(User user, Set<GrantedAuthority> authorities) {
             this.user = user;
+            this.authorities = authorities;
         }
 
         @Override
         public Collection<? extends GrantedAuthority> getAuthorities() {
-            Set<GrantedAuthority> authorities = new HashSet<>();
-            for (Role role : user.getRoles()) {
-                authorities.add(new SimpleGrantedAuthority("ROLE_" + role.getCode()));
-                for (Permission permission : role.getPermissions()) {
-                    authorities.add(new SimpleGrantedAuthority(permission.getCode()));
-                }
-            }
             return authorities;
         }
 

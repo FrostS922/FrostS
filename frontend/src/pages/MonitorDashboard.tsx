@@ -128,7 +128,8 @@ const MonitorDashboard: React.FC = () => {
     ? [
         { title: '今日登录成功', value: security.todayLoginSuccesses, icon: <CheckCircleOutlined />, color: '#52c41a' },
         { title: '今日登录失败', value: security.todayLoginFailures, icon: <CloseCircleOutlined />, color: security.todayLoginFailures > 10 ? '#ff4d4f' : '#faad14' },
-        { title: '异常IP数', value: security.anomalousIps, icon: <WarningOutlined />, color: security.anomalousIps > 0 ? '#ff4d4f' : '#52c41a' },
+        { title: '今日异常IP数', value: security.todayAnomalousIps, icon: <WarningOutlined />, color: security.todayAnomalousIps > 0 ? '#ff4d4f' : '#52c41a' },
+        { title: '锁定账户', value: security.lockedAccounts, icon: <CloseCircleOutlined />, color: security.lockedAccounts > 0 ? '#ff4d4f' : '#52c41a' },
         { title: '封禁IP', value: security.bannedIps, icon: <CloseCircleOutlined />, color: security.bannedIps > 0 ? '#ff4d4f' : '#52c41a' },
       ]
     : []

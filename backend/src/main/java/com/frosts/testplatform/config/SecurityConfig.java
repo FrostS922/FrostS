@@ -73,6 +73,9 @@ public class SecurityConfig {
                 .requestMatchers("/files/avatars/**").permitAll()
                 .requestMatchers("/error-report").permitAll()
                 .requestMatchers("/performance-report").permitAll()
+                .requestMatchers("/v3/api-docs/**").permitAll()
+                .requestMatchers("/swagger-ui/**").permitAll()
+                .requestMatchers("/swagger-ui.html").permitAll()
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex

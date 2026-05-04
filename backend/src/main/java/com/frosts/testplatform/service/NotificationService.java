@@ -6,6 +6,7 @@ import com.frosts.testplatform.entity.NotificationPreference;
 import com.frosts.testplatform.entity.NotificationRecipient;
 import com.frosts.testplatform.entity.User;
 import com.frosts.testplatform.event.NotificationEvent;
+import com.frosts.testplatform.mapper.NotificationMapper;
 import com.frosts.testplatform.repository.NotificationPreferenceRepository;
 import com.frosts.testplatform.repository.NotificationRecipientRepository;
 import com.frosts.testplatform.repository.NotificationRepository;
@@ -31,6 +32,7 @@ public class NotificationService {
     private final NotificationRecipientRepository recipientRepository;
     private final NotificationPreferenceRepository preferenceRepository;
     private final UserRepository userRepository;
+    private final NotificationMapper notificationMapper;
 
     @Transactional(readOnly = true)
     public Page<NotificationResponse> getNotifications(Long userId, String type, Boolean isRead, int page, int size) {
@@ -38,7 +40,7 @@ public class NotificationService {
                 userId, type, isRead,
                 PageRequest.of(page, size, Sort.by("notification.createdAt").descending()));
 
-        return recipientPage.map(this::toNotificationResponse);
+        return recipientPage.map(notificationMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -70,7 +72,7 @@ public class NotificationService {
                 .findFirst()
                 .orElseThrow(() -> new RuntimeException("无权查看此通知"));
 
-        return toDetailResponse(notification, recipient);
+        return notificationMapper.toDetailResponse(notification, recipient);
     }
 
     public void markAsRead(Long notificationId, Long userId) {
@@ -174,53 +176,6 @@ public class NotificationService {
         Page<NotificationRecipient> page = recipientRepository.findByUserIdWithFilters(
                 userId, type, false, PageRequest.of(0, 1, Sort.unsorted()));
         return page.getTotalElements();
-    }
-
-    private NotificationResponse toNotificationResponse(NotificationRecipient recipient) {
-        Notification notification = recipient.getNotification();
-        return NotificationResponse.builder()
-                .id(notification.getId())
-                .title(notification.getTitle())
-                .content(notification.getContent())
-                .type(notification.getType())
-                .category(notification.getCategory())
-                .priority(notification.getPriority())
-                .targetType(notification.getTargetType())
-                .targetId(notification.getTargetId())
-                .targetUrl(notification.getTargetUrl())
-                .isGlobal(notification.getIsGlobal())
-                .isRead(recipient.getIsRead())
-                .isStarred(recipient.getIsStarred())
-                .readAt(recipient.getReadAt())
-                .createdAt(notification.getCreatedAt())
-                .senderName(notification.getSender() != null ?
-                        (notification.getSender().getRealName() != null ?
-                                notification.getSender().getRealName() : notification.getSender().getUsername()) : "系统")
-                .build();
-    }
-
-    private NotificationDetailResponse toDetailResponse(Notification notification, NotificationRecipient recipient) {
-        return NotificationDetailResponse.builder()
-                .id(notification.getId())
-                .title(notification.getTitle())
-                .content(notification.getContent())
-                .type(notification.getType())
-                .category(notification.getCategory())
-                .priority(notification.getPriority())
-                .targetType(notification.getTargetType())
-                .targetId(notification.getTargetId())
-                .targetUrl(notification.getTargetUrl())
-                .isGlobal(notification.getIsGlobal())
-                .isRead(recipient.getIsRead())
-                .isStarred(recipient.getIsStarred())
-                .readAt(recipient.getReadAt())
-                .createdAt(notification.getCreatedAt())
-                .expiresAt(notification.getExpiresAt())
-                .senderName(notification.getSender() != null ?
-                        (notification.getSender().getRealName() != null ?
-                                notification.getSender().getRealName() : notification.getSender().getUsername()) : "系统")
-                .senderId(notification.getSender() != null ? notification.getSender().getId() : null)
-                .build();
     }
 
     @Transactional(readOnly = true)

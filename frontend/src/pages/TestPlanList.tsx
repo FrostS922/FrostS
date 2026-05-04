@@ -722,165 +722,177 @@ const TestPlanList: React.FC = () => {
         footer={null}
         destroyOnHidden
       >
-        <Tabs activeKey={activeTab} onChange={setActiveTab} style={{ marginTop: 8 }}>
-          <Tabs.TabPane tab="基本信息" key="basic">
-            {viewingPlan && (
-              <>
-                <div className="tp-detail-section">
-                  <div className="tp-detail-section-title">基本信息</div>
-                  <Descriptions column={2} size="small" bordered>
-                    <Descriptions.Item label="名称" span={2}>{viewingPlan.name}</Descriptions.Item>
-                    <Descriptions.Item label="编号">{viewingPlan.planNumber || '—'}</Descriptions.Item>
-                    <Descriptions.Item label="负责人">{viewingPlan.owner || '—'}</Descriptions.Item>
-                    <Descriptions.Item label="状态">
-                      {STATUS_MAP[viewingPlan.status] ? (
-                        <Tag color={STATUS_MAP[viewingPlan.status].color}>{STATUS_MAP[viewingPlan.status].label}</Tag>
-                      ) : viewingPlan.status || '—'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="环境">{viewingPlan.environment || '—'}</Descriptions.Item>
-                    <Descriptions.Item label="里程碑">{viewingPlan.milestone || '—'}</Descriptions.Item>
-                    <Descriptions.Item label="计划开始">
-                      {viewingPlan.startDate ? dayjs(viewingPlan.startDate).format('YYYY-MM-DD') : '—'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="计划结束">
-                      {viewingPlan.endDate ? dayjs(viewingPlan.endDate).format('YYYY-MM-DD') : '—'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="实际开始">
-                      {viewingPlan.actualStartDate ? dayjs(viewingPlan.actualStartDate).format('YYYY-MM-DD') : '—'}
-                    </Descriptions.Item>
-                    <Descriptions.Item label="实际结束">
-                      {viewingPlan.actualEndDate ? dayjs(viewingPlan.actualEndDate).format('YYYY-MM-DD') : '—'}
-                    </Descriptions.Item>
-                  </Descriptions>
-                </div>
-
-                {(viewingPlan.totalCases || 0) > 0 && (
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          style={{ marginTop: 8 }}
+          items={[
+            {
+              key: 'basic',
+              label: '基本信息',
+              children: viewingPlan && (
+                <>
                   <div className="tp-detail-section">
-                    <div className="tp-detail-section-title">执行概况</div>
-                    <Progress
-                      percent={viewingPlan.progress ? Number(viewingPlan.progress) : 0}
-                      status="active"
-                      format={(percent) => `${percent}% 完成`}
-                    />
-                    <Descriptions column={2} size="small" bordered style={{ marginTop: 12 }}>
-                      <Descriptions.Item label="总用例">{viewingPlan.totalCases || 0}</Descriptions.Item>
-                      <Descriptions.Item label="通过" style={{ color: '#52c41a' }}>{viewingPlan.passedCases || 0}</Descriptions.Item>
-                      <Descriptions.Item label="失败" style={{ color: '#ff4d4f' }}>{viewingPlan.failedCases || 0}</Descriptions.Item>
-                      <Descriptions.Item label="阻塞" style={{ color: '#faad14' }}>{viewingPlan.blockedCases || 0}</Descriptions.Item>
-                      <Descriptions.Item label="未执行">{viewingPlan.notRunCases || 0}</Descriptions.Item>
+                    <div className="tp-detail-section-title">基本信息</div>
+                    <Descriptions column={2} size="small" bordered>
+                      <Descriptions.Item label="名称" span={2}>{viewingPlan.name}</Descriptions.Item>
+                      <Descriptions.Item label="编号">{viewingPlan.planNumber || '—'}</Descriptions.Item>
+                      <Descriptions.Item label="负责人">{viewingPlan.owner || '—'}</Descriptions.Item>
+                      <Descriptions.Item label="状态">
+                        {STATUS_MAP[viewingPlan.status] ? (
+                          <Tag color={STATUS_MAP[viewingPlan.status].color}>{STATUS_MAP[viewingPlan.status].label}</Tag>
+                        ) : viewingPlan.status || '—'}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="环境">{viewingPlan.environment || '—'}</Descriptions.Item>
+                      <Descriptions.Item label="里程碑">{viewingPlan.milestone || '—'}</Descriptions.Item>
+                      <Descriptions.Item label="计划开始">
+                        {viewingPlan.startDate ? dayjs(viewingPlan.startDate).format('YYYY-MM-DD') : '—'}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="计划结束">
+                        {viewingPlan.endDate ? dayjs(viewingPlan.endDate).format('YYYY-MM-DD') : '—'}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="实际开始">
+                        {viewingPlan.actualStartDate ? dayjs(viewingPlan.actualStartDate).format('YYYY-MM-DD') : '—'}
+                      </Descriptions.Item>
+                      <Descriptions.Item label="实际结束" span={2}>
+                        {viewingPlan.actualEndDate ? dayjs(viewingPlan.actualEndDate).format('YYYY-MM-DD') : '—'}
+                      </Descriptions.Item>
                     </Descriptions>
                   </div>
-                )}
 
-                <div className="tp-detail-section">
-                  <div className="tp-detail-section-title">测试内容</div>
-                  <Descriptions column={1} size="small" bordered>
-                    <Descriptions.Item label="描述">{viewingPlan.description || <span className="tp-detail-empty">无</span>}</Descriptions.Item>
-                    <Descriptions.Item label="测试范围">{viewingPlan.scope || <span className="tp-detail-empty">无</span>}</Descriptions.Item>
-                    <Descriptions.Item label="测试策略">{viewingPlan.testStrategy || <span className="tp-detail-empty">无</span>}</Descriptions.Item>
-                  </Descriptions>
-                </div>
+                  {(viewingPlan.totalCases || 0) > 0 && (
+                    <div className="tp-detail-section">
+                      <div className="tp-detail-section-title">执行概况</div>
+                      <Progress
+                        percent={viewingPlan.progress ? Number(viewingPlan.progress) : 0}
+                        status="active"
+                        format={(percent) => `${percent}% 完成`}
+                      />
+                      <Descriptions column={2} size="small" bordered style={{ marginTop: 12 }}>
+                        <Descriptions.Item label="总用例">{viewingPlan.totalCases || 0}</Descriptions.Item>
+                        <Descriptions.Item label="通过" style={{ color: '#52c41a' }}>{viewingPlan.passedCases || 0}</Descriptions.Item>
+                        <Descriptions.Item label="失败" style={{ color: '#ff4d4f' }}>{viewingPlan.failedCases || 0}</Descriptions.Item>
+                        <Descriptions.Item label="阻塞" style={{ color: '#faad14' }}>{viewingPlan.blockedCases || 0}</Descriptions.Item>
+                        <Descriptions.Item label="未执行" span={2}>{viewingPlan.notRunCases || 0}</Descriptions.Item>
+                      </Descriptions>
+                    </div>
+                  )}
 
-                <div className="tp-detail-section">
-                  <div className="tp-detail-section-title">质量标准</div>
-                  <Descriptions column={1} size="small" bordered>
-                    <Descriptions.Item label="准入标准">{viewingPlan.entryCriteria || <span className="tp-detail-empty">无</span>}</Descriptions.Item>
-                    <Descriptions.Item label="准出标准">{viewingPlan.exitCriteria || <span className="tp-detail-empty">无</span>}</Descriptions.Item>
-                    <Descriptions.Item label="风险评估">{viewingPlan.risk || <span className="tp-detail-empty">无</span>}</Descriptions.Item>
-                  </Descriptions>
-                </div>
+                  <div className="tp-detail-section">
+                    <div className="tp-detail-section-title">测试内容</div>
+                    <Descriptions column={1} size="small" bordered>
+                      <Descriptions.Item label="描述">{viewingPlan.description || <span className="tp-detail-empty">无</span>}</Descriptions.Item>
+                      <Descriptions.Item label="测试范围">{viewingPlan.scope || <span className="tp-detail-empty">无</span>}</Descriptions.Item>
+                      <Descriptions.Item label="测试策略">{viewingPlan.testStrategy || <span className="tp-detail-empty">无</span>}</Descriptions.Item>
+                    </Descriptions>
+                  </div>
 
-                <div className="tp-detail-section">
-                  <div className="tp-detail-section-title">审计信息</div>
-                  <Descriptions column={2} size="small" bordered>
-                    <Descriptions.Item label="创建人">{viewingPlan.createdBy || '—'}</Descriptions.Item>
-                    <Descriptions.Item label="创建时间">{viewingPlan.createdAt ? dayjs(viewingPlan.createdAt).format('YYYY-MM-DD HH:mm:ss') : '—'}</Descriptions.Item>
-                    <Descriptions.Item label="更新人">{viewingPlan.updatedBy || '—'}</Descriptions.Item>
-                    <Descriptions.Item label="更新时间">{viewingPlan.updatedAt ? dayjs(viewingPlan.updatedAt).format('YYYY-MM-DD HH:mm:ss') : '—'}</Descriptions.Item>
-                  </Descriptions>
-                </div>
+                  <div className="tp-detail-section">
+                    <div className="tp-detail-section-title">质量标准</div>
+                    <Descriptions column={1} size="small" bordered>
+                      <Descriptions.Item label="准入标准">{viewingPlan.entryCriteria || <span className="tp-detail-empty">无</span>}</Descriptions.Item>
+                      <Descriptions.Item label="准出标准">{viewingPlan.exitCriteria || <span className="tp-detail-empty">无</span>}</Descriptions.Item>
+                      <Descriptions.Item label="风险评估">{viewingPlan.risk || <span className="tp-detail-empty">无</span>}</Descriptions.Item>
+                    </Descriptions>
+                  </div>
 
-                <Space style={{ marginTop: 8 }}>
-                  <Button icon={<EditOutlined />} onClick={() => { setDetailModalVisible(false); openEdit(viewingPlan) }}>编辑</Button>
-                </Space>
-              </>
-            )}
-          </Tabs.TabPane>
+                  <div className="tp-detail-section">
+                    <div className="tp-detail-section-title">审计信息</div>
+                    <Descriptions column={2} size="small" bordered>
+                      <Descriptions.Item label="创建人">{viewingPlan.createdBy || '—'}</Descriptions.Item>
+                      <Descriptions.Item label="创建时间">{viewingPlan.createdAt ? dayjs(viewingPlan.createdAt).format('YYYY-MM-DD HH:mm:ss') : '—'}</Descriptions.Item>
+                      <Descriptions.Item label="更新人">{viewingPlan.updatedBy || '—'}</Descriptions.Item>
+                      <Descriptions.Item label="更新时间">{viewingPlan.updatedAt ? dayjs(viewingPlan.updatedAt).format('YYYY-MM-DD HH:mm:ss') : '—'}</Descriptions.Item>
+                    </Descriptions>
+                  </div>
 
-          <Tabs.TabPane tab="关联用例" key="cases">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-              <Space wrap>
-                <Button type="primary" icon={<PlusOutlined />} onClick={openAddCasesModal}>添加用例</Button>
-                <Button icon={<ThunderboltOutlined />} onClick={openBatchExecuteModal} disabled={selectedRowKeys.length === 0}>
-                  批量执行
-                </Button>
-                <Button icon={<UserAddOutlined />} onClick={openBatchAssignModal} disabled={selectedRowKeys.length === 0}>
-                  分配执行人
-                </Button>
-                <Button icon={<MinusCircleOutlined />} danger onClick={handleBatchRemove} disabled={selectedRowKeys.length === 0}>
-                  批量移除
-                </Button>
-              </Space>
-              <Space wrap>
-                <Select
-                  placeholder="执行状态"
-                  allowClear
-                  style={{ width: 120 }}
-                  value={filterStatus}
-                  onChange={setFilterStatus}
-                >
-                  {Object.entries(CASE_STATUS_MAP).map(([k, v]) => (
-                    <Select.Option key={k} value={k}>{v.label}</Select.Option>
-                  ))}
-                </Select>
-                <Select
-                  placeholder="优先级"
-                  allowClear
-                  style={{ width: 100 }}
-                  value={filterPriority}
-                  onChange={setFilterPriority}
-                >
-                  {Object.entries(PRIORITY_MAP).map(([k, v]) => (
-                    <Select.Option key={k} value={k}>{v.label}</Select.Option>
-                  ))}
-                </Select>
-                <Input
-                  placeholder="搜索用例"
-                  prefix={<SearchOutlined />}
-                  style={{ width: 180 }}
-                  value={caseSearchText}
-                  onChange={(e) => setCaseSearchText(e.target.value)}
-                  allowClear
-                />
-              </Space>
-            </div>
+                  <Space style={{ marginTop: 8 }}>
+                    <Button icon={<EditOutlined />} onClick={() => { setDetailModalVisible(false); openEdit(viewingPlan) }}>编辑</Button>
+                  </Space>
+                </>
+              ),
+            },
+            {
+              key: 'cases',
+              label: '关联用例',
+              children: (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
+                    <Space wrap>
+                      <Button type="primary" icon={<PlusOutlined />} onClick={openAddCasesModal}>添加用例</Button>
+                      <Button icon={<ThunderboltOutlined />} onClick={openBatchExecuteModal} disabled={selectedRowKeys.length === 0}>
+                        批量执行
+                      </Button>
+                      <Button icon={<UserAddOutlined />} onClick={openBatchAssignModal} disabled={selectedRowKeys.length === 0}>
+                        分配执行人
+                      </Button>
+                      <Button icon={<MinusCircleOutlined />} danger onClick={handleBatchRemove} disabled={selectedRowKeys.length === 0}>
+                        批量移除
+                      </Button>
+                    </Space>
+                    <Space wrap>
+                      <Select
+                        placeholder="执行状态"
+                        allowClear
+                        style={{ width: 120 }}
+                        value={filterStatus}
+                        onChange={setFilterStatus}
+                      >
+                        {Object.entries(CASE_STATUS_MAP).map(([k, v]) => (
+                          <Select.Option key={k} value={k}>{v.label}</Select.Option>
+                        ))}
+                      </Select>
+                      <Select
+                        placeholder="优先级"
+                        allowClear
+                        style={{ width: 100 }}
+                        value={filterPriority}
+                        onChange={setFilterPriority}
+                      >
+                        {Object.entries(PRIORITY_MAP).map(([k, v]) => (
+                          <Select.Option key={k} value={k}>{v.label}</Select.Option>
+                        ))}
+                      </Select>
+                      <Input
+                        placeholder="搜索用例"
+                        prefix={<SearchOutlined />}
+                        style={{ width: 180 }}
+                        value={caseSearchText}
+                        onChange={(e) => setCaseSearchText(e.target.value)}
+                        allowClear
+                      />
+                    </Space>
+                  </div>
 
-            <Table
-              dataSource={filteredPlanCases}
-              columns={planCaseColumns}
-              loading={planCasesLoading}
-              rowKey="id"
-              scroll={{ x: 900 }}
-              size="small"
-              rowSelection={{
-                selectedRowKeys,
-                onChange: setSelectedRowKeys,
-              }}
-              pagination={false}
-            />
+                  <Table
+                    dataSource={filteredPlanCases}
+                    columns={planCaseColumns}
+                    loading={planCasesLoading}
+                    rowKey="id"
+                    scroll={{ x: 900 }}
+                    size="small"
+                    rowSelection={{
+                      selectedRowKeys,
+                      onChange: setSelectedRowKeys,
+                    }}
+                    pagination={false}
+                  />
 
-            <div style={{
-              marginTop: 12, padding: '8px 16px', background: 'var(--bg-secondary, #fafafa)',
-              borderRadius: 6, display: 'flex', gap: 24, fontSize: 13,
-            }}>
-              <span>总计 <strong>{planCaseStats.total}</strong></span>
-              <span style={{ color: '#52c41a' }}>通过 <strong>{planCaseStats.passed}</strong></span>
-              <span style={{ color: '#ff4d4f' }}>失败 <strong>{planCaseStats.failed}</strong></span>
-              <span style={{ color: '#faad14' }}>阻塞 <strong>{planCaseStats.blocked}</strong></span>
-              <span>未执行 <strong>{planCaseStats.notRun}</strong></span>
-            </div>
-          </Tabs.TabPane>
-        </Tabs>
+                  <div style={{
+                    marginTop: 12, padding: '8px 16px', background: 'var(--bg-secondary, #fafafa)',
+                    borderRadius: 6, display: 'flex', gap: 24, fontSize: 13,
+                  }}>
+                    <span>总计 <strong>{planCaseStats.total}</strong></span>
+                    <span style={{ color: '#52c41a' }}>通过 <strong>{planCaseStats.passed}</strong></span>
+                    <span style={{ color: '#ff4d4f' }}>失败 <strong>{planCaseStats.failed}</strong></span>
+                    <span style={{ color: '#faad14' }}>阻塞 <strong>{planCaseStats.blocked}</strong></span>
+                    <span>未执行 <strong>{planCaseStats.notRun}</strong></span>
+                  </div>
+                </>
+              ),
+            },
+          ]}
+        />
       </Modal>
 
       <Modal

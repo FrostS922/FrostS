@@ -582,7 +582,7 @@ const DefectList: React.FC = () => {
                 <Descriptions.Item label="来源">
                   {SOURCE_MAP[viewingDefect.source] || viewingDefect.source || '—'}
                 </Descriptions.Item>
-                <Descriptions.Item label="重开次数">
+                <Descriptions.Item label="重开次数" span={2}>
                   {viewingDefect.reopenCount > 0 ? (
                     <Badge count={viewingDefect.reopenCount} style={{ backgroundColor: '#ff4d4f' }} />
                   ) : '0'}
@@ -642,7 +642,7 @@ const DefectList: React.FC = () => {
                   <Descriptions.Item label="验证时间">
                     {viewingDefect.verifiedAt ? dayjs(viewingDefect.verifiedAt).format('YYYY-MM-DD HH:mm:ss') : '—'}
                   </Descriptions.Item>
-                  <Descriptions.Item label="关闭时间">
+                  <Descriptions.Item label="关闭时间" span={2}>
                     {viewingDefect.closedAt ? dayjs(viewingDefect.closedAt).format('YYYY-MM-DD HH:mm:ss') : '—'}
                   </Descriptions.Item>
                 </Descriptions>

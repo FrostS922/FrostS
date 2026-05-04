@@ -1,6 +1,7 @@
 package com.frosts.testplatform.entity;
 
 import com.frosts.testplatform.common.BaseEntity;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -21,6 +22,7 @@ public class TestPlan extends BaseEntity {
     @Column(unique = true, length = 50)
     private String planNumber;
 
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
@@ -78,6 +80,7 @@ public class TestPlan extends BaseEntity {
     @Column(name = "exit_criteria", columnDefinition = "TEXT")
     private String exitCriteria;
 
+    @JsonIgnore
     @OneToMany(mappedBy = "testPlan", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<TestPlanCase> testPlanCases;
 

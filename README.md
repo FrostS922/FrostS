@@ -102,7 +102,7 @@ docker-compose down
 
 启动后访问：
 - 前端界面: http://localhost
-- 后端API: http://localhost:8080/api
+- 后端API: http://localhost:9080/api
 
 ### 本地开发
 

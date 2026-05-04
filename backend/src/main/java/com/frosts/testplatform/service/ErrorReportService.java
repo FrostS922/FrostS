@@ -9,11 +9,12 @@ import com.frosts.testplatform.dto.errorreport.ErrorOverviewResponse;
 import com.frosts.testplatform.dto.errorreport.ErrorReportRequest;
 import com.frosts.testplatform.dto.errorreport.ErrorTrendResponse;
 import com.frosts.testplatform.dto.notification.CreateNotificationRequest;
+import com.frosts.testplatform.dto.report.ReportExportDataResponse;
 import com.frosts.testplatform.entity.ErrorLog;
 import com.frosts.testplatform.entity.User;
 import com.frosts.testplatform.event.NotificationEvent;
+import com.frosts.testplatform.mapper.ErrorLogMapper;
 import com.frosts.testplatform.repository.ErrorLogRepository;
-import com.frosts.testplatform.repository.SystemSettingRepository;
 import com.frosts.testplatform.repository.UserRepository;
 import com.frosts.testplatform.service.push.NotificationPushService;
 import lombok.RequiredArgsConstructor;
@@ -42,11 +43,12 @@ public class ErrorReportService {
 
     private final ErrorLogRepository errorLogRepository;
     private final UserRepository userRepository;
-    private final SystemSettingRepository systemSettingRepository;
+    private final SystemSettingService systemSettingService;
     private final NotificationService notificationService;
     private final NotificationPushService notificationPushService;
     private final ApplicationEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
+    private final ErrorLogMapper errorLogMapper;
 
     private static final int DEFAULT_ALERT_THRESHOLD = 5;
     private static final int DEFAULT_ALERT_WINDOW_MINUTES = 10;
@@ -93,7 +95,7 @@ public class ErrorReportService {
                                                 LocalDateTime endTime, Pageable pageable) {
         Pageable unsortedPageable = PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.unsorted());
         Page<ErrorLog> page = errorLogRepository.searchErrors(keyword, startTime, endTime, unsortedPageable);
-        return page.map(this::toResponse);
+        return page.map(errorLogMapper::toResponse);
     }
 
     @Transactional
@@ -157,9 +159,9 @@ public class ErrorReportService {
 
     private void checkAndAlert(String errorMessage) {
         try {
-            int threshold = getSettingAsInt("error_monitor.alert_threshold", DEFAULT_ALERT_THRESHOLD);
-            int windowMinutes = getSettingAsInt("error_monitor.alert_window_minutes", DEFAULT_ALERT_WINDOW_MINUTES);
-            int cooldownMinutes = getSettingAsInt("error_monitor.alert_cooldown_minutes", DEFAULT_ALERT_COOLDOWN_MINUTES);
+            int threshold = systemSettingService.getSettingAsInt("error_monitor.alert_threshold", DEFAULT_ALERT_THRESHOLD);
+            int windowMinutes = systemSettingService.getSettingAsInt("error_monitor.alert_window_minutes", DEFAULT_ALERT_WINDOW_MINUTES);
+            int cooldownMinutes = systemSettingService.getSettingAsInt("error_monitor.alert_cooldown_minutes", DEFAULT_ALERT_COOLDOWN_MINUTES);
 
             LocalDateTime since = LocalDateTime.now().minusMinutes(windowMinutes);
             long count = errorLogRepository.countByErrorMessageAndCreatedAtAfterAndIsDeletedFalse(errorMessage, since);
@@ -214,30 +216,6 @@ public class ErrorReportService {
         }
     }
 
-    private int getSettingAsInt(String key, int defaultValue) {
-        return systemSettingRepository.findBySettingKeyAndIsDeletedFalse(key)
-                .map(s -> {
-                    try { return Integer.parseInt(s.getSettingValue()); }
-                    catch (NumberFormatException e) { return defaultValue; }
-                })
-                .orElse(defaultValue);
-    }
-
-    private ErrorLogResponse toResponse(ErrorLog entity) {
-        return ErrorLogResponse.builder()
-                .id(entity.getId())
-                .errorMessage(entity.getErrorMessage())
-                .stackTrace(entity.getStackTrace())
-                .pageUrl(entity.getPageUrl())
-                .userAgent(entity.getUserAgent())
-                .httpStatus(entity.getHttpStatus())
-                .fallbackMessage(entity.getFallbackMessage())
-                .extraInfo(entity.getExtraInfo())
-                .category(entity.getCategory())
-                .createdAt(entity.getCreatedAt())
-                .build();
-    }
-
     private String truncate(String value, int max) {
         if (value == null) return null;
         return value.length() > max ? value.substring(0, max) : value;
@@ -280,7 +258,7 @@ public class ErrorReportService {
     @Transactional(readOnly = true)
     public Page<ErrorLogResponse> getErrorsByMessage(String errorMessage, Pageable pageable) {
         Page<ErrorLog> page = errorLogRepository.findByErrorMessageAndIsDeletedFalseOrderByCreatedAtDesc(errorMessage, pageable);
-        return page.map(this::toResponse);
+        return page.map(errorLogMapper::toResponse);
     }
 
     @Transactional(readOnly = true)
@@ -290,15 +268,8 @@ public class ErrorReportService {
         long today = errorLogRepository.countByCreatedAtAfterAndIsDeletedFalse(todayStart);
 
         List<ErrorLog> recent = errorLogRepository.findTop5ByIsDeletedFalseOrderByCreatedAtDesc();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         List<ErrorOverviewResponse.RecentError> recentErrors = recent.stream()
-                .map(log -> ErrorOverviewResponse.RecentError.builder()
-                        .id(log.getId())
-                        .errorMessage(truncate(log.getErrorMessage(), 80))
-                        .httpStatus(log.getHttpStatus())
-                        .pageUrl(log.getPageUrl())
-                        .createdAt(log.getCreatedAt() != null ? log.getCreatedAt().format(fmt) : "")
-                        .build())
+                .map(errorLogMapper::toRecentError)
                 .toList();
 
         return ErrorOverviewResponse.builder()
@@ -330,6 +301,28 @@ public class ErrorReportService {
             return com.frosts.testplatform.util.ExportUtils.toExcel(headers, rows);
         }
         return com.frosts.testplatform.util.ExportUtils.toCsv(headers, rows);
+    }
+
+    @Transactional(readOnly = true)
+    public ReportExportDataResponse.ErrorStats getErrorStats(LocalDateTime startTime, LocalDateTime endTime) {
+        long totalErrors = errorLogRepository.countByIsDeletedFalse();
+        LocalDateTime todayStart = LocalDate.now().atStartOfDay();
+        long todayErrors = errorLogRepository.countByCreatedAtAfterAndIsDeletedFalse(todayStart);
+
+        List<Object[]> categoryCounts = errorLogRepository.countByCategoryInRange(startTime, endTime);
+        List<ReportExportDataResponse.ErrorCategoryCount> topCategories = categoryCounts.stream()
+                .limit(3)
+                .map(row -> ReportExportDataResponse.ErrorCategoryCount.builder()
+                        .category((String) row[0])
+                        .count(((Number) row[1]).longValue())
+                        .build())
+                .toList();
+
+        return ReportExportDataResponse.ErrorStats.builder()
+                .totalErrors(totalErrors)
+                .todayErrors(todayErrors)
+                .topCategories(topCategories)
+                .build();
     }
 
     private String classifyError(String message, String stack) {
